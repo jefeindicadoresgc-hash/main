@@ -4,37 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spider-Verse Manager Hub</title>
-    
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="CSS/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Teko:wght@500;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase Apps -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <!-- SheetJS (Lector para CARGAR el Excel de ventas) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    
-    <!-- ExcelJS y FileSaver (Generador para EXPORTAR el Excel nivel KPI) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
 
-    <!-- ========================================================= -->
-    <!-- SECCIÓN 2: PANTALLA DE INTRODUCCIÓN (CÓDIGO 2099)         -->
-    <!-- ========================================================= -->
     <div id="intro-screen" class="intro-overlay">
-        <div id="intro-content">
-            <img src="logo_intro.png" id="intro-logo" alt="Iniciar Sistema" title="Haga clic para iniciar">
-            <video id="intro-video" src="INTRO.mp4" playsinline></video>
-        </div>
+        <div id="intro-content"><img src="MEDIA/logo_intro.png" id="intro-logo"><video id="intro-video" src="MEDIA/INTRO.mp4" playsinline></video></div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- SECCIÓN 3: CAJÓN LATERAL (ÓRDENES EN TIEMPO REAL)         -->
-    <!-- ========================================================= -->
+    <!-- CAJÓN DE ÓRDENES (Único Cajón Lateral) -->
     <aside id="side-drawer" class="side-drawer"> 
         <div class="drawer-content">
             <div class="subtitle-row">
@@ -42,76 +27,48 @@
                 <button class="glitch-btn" onclick="window.open('https://jefeindicadoresgc-hash.github.io/control-de-ordenes/', '_blank')">PAGE</button>
             </div>
             <span id="sync-status" class="sync-indicator">Sincronizando...</span>
-            
-            <main class="telemetry-panel">
-                <div id="tabla-resumen-container" class="table-responsive"></div>
-            </main>
+            <main class="telemetry-panel"><div id="tabla-resumen-container" class="table-responsive"></div></main>
         </div>
-        
-        <div class="drawer-tab" onclick="toggleDrawer()">
-            <span>O</span><span>R</span><span>D</span><span>E</span><span>N</span><span>E</span><span>S</span>
-        </div>
+        <div class="drawer-tab" onclick="toggleDrawer()"><span>O</span><span>R</span><span>D</span><span>E</span><span>N</span><span>E</span><span>S</span></div>
     </aside>
 
-    <!-- ========================================================= -->
-    <!-- SECCIÓN 4: LAYOUT PRINCIPAL (IZQUIERDA)                   -->
-    <!-- ========================================================= -->
+    <!-- CABECERA PRINCIPAL Y RENTABILIDAD -->
     <div class="main-layout">
         <div class="left-col" style="position: relative;">
             <header class="main-header">
                 <h1 class="spider-title">HYUNDAI COATZACOALCOS KPI</h1>
-                
-                <!-- NUEVO: Botón de Excel Gigante y Anclado Arriba -->
-                <img src="boton.png" id="btn-export-excel-main" alt="Exportar a Excel" title="Descargar Reporte KPI" onclick="exportarTodoAExcel()">
+                <img src="MEDIA/boton.png" id="btn-export-excel-main" alt="Exportar a Excel" onclick="exportarTodoAExcel()">
             </header>
-            
-            <div class="gif-wrapper comic-panel">
-                <img src="GIF1.gif" alt="Visualización Central">
-            </div>
-
-            <div class="quick-links">
-                <button class="btn-action spider-web-btn" onclick="window.open('https://sabanaasesores-kxrimsr234gn62ruhnagks.streamlit.app/', '_blank')">
-                    SÁBANA DE ASESORES ⭧
-                </button>
-            </div>
+            <div class="gif-wrapper comic-panel"><img src="MEDIA/GIF1.gif" alt="Visualización Central"></div>
+            <div class="quick-links"><button class="btn-action spider-web-btn" onclick="window.open('https://sabanaasesores-kxrimsr234gn62ruhnagks.streamlit.app/', '_blank')">SÁBANA DE ASESORES ⭧</button></div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- SECCIÓN 5: LAYOUT PRINCIPAL (DERECHA - RENTABILIDAD)      -->
-        <!-- ========================================================= -->
         <div class="right-col fixed-rentabilidad">
-            <!-- SPIDER-MAN REPTANDO SOBRE LA BARDA -->
-            <img src="spidey.gif" id="spidey-crawler" class="spidey-crawler" alt="Spider-Man Crawling">
-
+            <img src="MEDIA/spidey.gif" id="spidey-crawler" class="spidey-crawler" alt="Spider-Man Crawling">
             <div class="comic-body-compact">
-                <!-- BARRA DE PERÍODO (MES/AÑO) Y BOTONES -->
+                <!-- CONTROLES SUPERIORES (DISEÑO CÓMIC) -->
                 <div class="period-header-bar">
                     <div class="period-controls">
                         <label>PERÍODO:</label>
                         <select id="select-mes">
-                            <option value="01">Enero</option><option value="02">Febrero</option>
-                            <option value="03">Marzo</option><option value="04">Abril</option>
-                            <option value="05">Mayo</option><option value="06">Junio</option>
-                            <option value="07">Julio</option><option value="08">Agosto</option>
-                            <option value="09">Septiembre</option><option value="10">Octubre</option>
-                            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option>
+                            <option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option>
+                            <option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
                         </select>
                         <select id="select-anio">
-                            <option value="2024">2024</option><option value="2025">2025</option>
-                            <option value="2026">2026</option><option value="2027">2027</option>
+                            <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
                         </select>
-                        
-                        <button class="btn-buscar-info" onclick="cargarSnapshotMes()">BUSCAR INFO 🔍</button>
-                        <button class="btn-subir-info" onclick="subirSnapshotMes()">SUBIR INFO ☁</button>
+                        <label class="btn-action" style="background:var(--spider-cyan); color:#000; cursor:pointer; margin-left:15px; padding: 4px 15px; font-size: 1.2rem; display: inline-block;" for="ordenes-excel-upload">ÓRDENES FACTURADAS 📄</label>
+                        <input type="file" id="ordenes-excel-upload" accept=".xls,.xlsx,.csv" style="display: none;" onchange="procesarExcelOrdenesFacturadas(event)">
+                        <button class="btn-action" style="background:var(--spider-red); color:#fff; margin-left:10px; padding: 4px 15px; font-size: 1.2rem;" onclick="subirSnapshotMes()">GUARDAR MES ☁</button>
+                        <span id="rentabilidad-fecha-act" style="margin-left: auto; color: var(--spider-cyan); font-family: 'Teko'; font-size: 1.2rem; letter-spacing: 1px;">ÚLT. ACT: BUSCANDO...</span>
                     </div>
                 </div>
 
                 <div class="comic-controls">
                     <div class="comic-input-box compact-input">
-                        <label>OBJETIVO MENSUAL:</label>
-                        <input type="number" id="input-objetivo" value="1000000" step="1000" onchange="calcularRentabilidad()">
+                        <label>OBJETIVO MENSUAL:</label><input type="number" id="input-objetivo" value="1000000" step="1000" onchange="calcularRentabilidad()">
                     </div>
-                    
                     <div class="upload-box">
                         <label class="btn-action compact-btn" for="sales-excel-upload">CARGAR REPORTE (EXCEL)</label>
                         <input type="file" id="sales-excel-upload" accept=".xls,.xlsx" style="display: none;" onchange="procesarExcelVentas(event)">
@@ -119,206 +76,231 @@
                 </div>
 
                 <div class="comic-kpis compact-kpis">
-                    <div class="kpi-item stat-utilidad">
-                        <span class="lbl">UTILIDAD REAL</span>
-                        <span class="val" id="kpi-utilidad">$0.00</span>
-                    </div>
-                    <div class="kpi-item stat-alcance">
-                        <span class="lbl">ALCANCE</span>
-                        <span class="val" id="kpi-alcance">0%</span>
-                    </div>
-                    <div class="kpi-item stat-faltante">
-                        <span class="lbl">FALTANTE</span>
-                        <span class="val" id="kpi-faltante">$0.00</span>
-                    </div>
+                    <div class="kpi-item stat-utilidad"><span class="lbl">UTILIDAD REAL</span><span class="val" id="kpi-utilidad">$0.00</span></div>
+                    <div class="kpi-item stat-alcance"><span class="lbl">ALCANCE</span><span class="val" id="kpi-alcance">0%</span></div>
+                    <div class="kpi-item stat-faltante"><span class="lbl">FALTANTE</span><span class="val" id="kpi-faltante">$0.00</span></div>
                 </div>
 
                 <div class="table-container scrollable-rentabilidad">
                     <table class="comic-table compact-table" id="tabla-rentabilidad">
-                        <thead>
-                            <tr>
-                                <th>SECCIÓN</th><th>VENTA (C/IVA)</th><th>COSTO</th>
-                                <th>UTILIDAD</th><th>PART %</th><th>OBJETIVO</th>
-                                <th>ALCANCE</th><th>ORD</th><th>AÑO PAS.</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-rentabilidad">
-                            <tr><td colspan="9" class="empty-msg">Carga el reporte de ventas para calcular...</td></tr>
-                        </tbody>
+                        <thead><tr><th>SECCIÓN</th><th>VENTA (S/IVA)</th><th>COSTO</th><th>UTILIDAD</th><th>PART %</th><th>OBJETIVO</th><th>ALCANCE</th><th>ORD</th><th>AÑO PAS.</th></tr></thead>
+                        <tbody id="tbody-rentabilidad"><tr><td colspan="9" class="empty-msg">Carga el reporte de ventas para calcular...</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- SECCIÓN 6: MÓDULOS INFERIORES (APERTURA) Y REFACCIONES    -->
-    <!-- ========================================================= -->
-    <div class="bottom-modules">
+    <!-- MÓDULOS INFERIORES: 2 FILAS COMPLETAS -->
+    <div class="bottom-modules" style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
         
-        <!-- REFACCIONES -->
-        <div class="module-col comic-panel refacciones-panel">
-            <h3 class="module-title">REFACCIONES</h3>
+        <!-- FILA 1: REFACCIONES Y ASESORES -->
+        <div class="bottom-row" style="display: flex; gap: 25px; width: 100%;">
+            <div class="module-col comic-panel refacciones-panel" style="flex: 1; min-width: 0;">
+                <h3 class="module-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span>REFACCIONES</span>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-action spider-web-btn" style="font-size: 1.2rem; padding: 4px 10px;" onclick="window.open('https://jefeindicadoresgc-hash.github.io/refacciones/', '_blank')">PAGE ⭧</button>
+                        <!-- Se quitó el botón azul de Accesorios -->
+                    </div>
+                </h3>
+                
+                <div class="sub-table-container" style="width: 100%;">
+                    <h4 class="sub-title">COMPRAS VS OBJETIVOS (EN VIVO)</h4>
+                    <table class="comic-table manual-table hard-lines dark-table" style="width: 100%;">
+                        <thead><tr><th>LÍNEAS</th><th>OBJETIVO</th><th>COMPRAS</th><th>ALCANCE</th><th>DIFERENCIA</th></tr></thead>
+                        <tbody>
+                            <tr><td>MOBIS</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-mobis" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="comp-mobis" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="alc-mobis" style="font-weight: bold; text-align: center;">0%</td><td id="dif-mobis" style="text-align: center;">$0.00</td></tr>
+                            <tr><td>SEMI-SINTETICO</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-semi" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="comp-semi" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="alc-semi" style="font-weight: bold; text-align: center;">0%</td><td id="dif-semi" style="text-align: center;">$0.00</td></tr>
+                            <tr><td>SINTETICO</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-sint" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="comp-sint" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="alc-sint" style="font-weight: bold; text-align: center;">0%</td><td id="dif-sint" style="text-align: center;">$0.00</td></tr>
+                            <tr><td>WURTH</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-wurth" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="comp-wurth" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="alc-wurth" style="font-weight: bold; text-align: center;">0%</td><td id="dif-wurth" style="text-align: center;">$0.00</td></tr>
+                            <tr><td>LLANTAS</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-llantas" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="comp-llantas" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="alc-llantas" style="font-weight: bold; text-align: center;">0%</td><td id="dif-llantas" style="text-align: center;">$0.00</td></tr>
+                            <tr><td>ACCESORIOS</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-acc" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="comp-acc" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="alc-acc" style="font-weight: bold; text-align: center;">0%</td><td id="dif-acc" style="text-align: center;">$0.00</td></tr>
+                            <tr class="row-total"><td style="text-align: center;">TOTALES</td><td id="tot-obj-comp" style="text-align: center;">$0.00</td><td id="tot-comp" style="text-align: center;">$0.00</td><td id="tot-alc-comp" style="color:#000; text-align: center;">0%</td><td id="tot-dif-comp" style="text-align: center;">$0.00</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="comic-panel-alt" style="margin: 20px 0; width: 100%; height: 140px;"><img src="MEDIA/GIF3.gif" alt="Transición Refacciones" style="width: 100%; height: 100%; object-fit: cover;"></div></div>
+
+                <div class="sub-table-container" style="width: 100%;">
+                    <h4 class="sub-title">VENTAS REFACCIONES (EN VIVO)</h4>
+                    <table class="comic-table manual-table dark-table hard-lines" style="width: 100%;">
+                        <thead><tr><th>LEYENDA</th><th>MOSTRADOR</th><th>TALLER</th><th>TOTAL</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-weight:bold; text-align: center;">Objetivo</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-mostrador" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="obj-taller" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="obj-tot-ref" style="font-weight:bold; font-size:1.1rem; text-align: center;">$0.00</td></tr>
+                            <tr><td style="font-weight:bold; text-align: center;">Venta</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="ven-mostrador" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="ven-taller" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="ven-tot-ref" style="font-weight:bold; font-size:1.1rem; text-align: center;">$0.00</td></tr>
+                            <tr><td style="font-weight:bold; text-align: center;">Costo</td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="cos-mostrador" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td style="text-align: center;"><span class="currency-symbol">$</span><span id="cos-taller" style="font-weight:bold; font-size:1.1rem;">0.00</span></td><td id="cos-tot-ref" style="font-weight:bold; font-size:1.1rem; text-align: center;">$0.00</td></tr>
+                            <tr class="row-total"><td style="text-align: center;">Utilidad</td><td id="ut-mostrador" style="font-weight:bold; text-align: center;">$0.00</td><td id="ut-taller" style="font-weight:bold; text-align: center;">$0.00</td><td id="ut-tot-ref" style="font-weight:900; text-align: center;">$0.00</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="text-align:center; margin-top: 15px; font-size: 1.4rem;"><span style="color:var(--spider-cyan); font-weight:bold; font-family:'Teko', sans-serif; letter-spacing:1px;">ALCANCE TOTAL: </span><span id="alcance-tot-ref" style="color:var(--white); font-weight:bold; font-family:'Teko', sans-serif;">0%</span></div>
+                </div>
+
+                <div class="sub-table-container" style="width: 100%; margin-top: 25px;">
+                    <h4 class="sub-title">OBSOLETO Y PREOBSOLETO</h4>
+                    <div class="comic-kpis compact-kpis mini-kpis" style="margin-bottom: 0;">
+                        <div class="kpi-item" style="box-shadow: 6px 6px 0px #00f0ff;"><span class="lbl">G3 (Técnicamente Obs)</span><span class="val" style="font-size: 1.1rem; color: #666; margin-top: 5px;">SKUs: <span id="g3-sku-val" style="color: #000; font-size: 1.4rem;">0</span></span><span class="val" id="g3-monto-val" style="color: #000; font-size: 1.6rem; margin-top: 5px;">$0.00</span></div>
+                        <div class="kpi-item" style="box-shadow: 6px 6px 0px #e10024;"><span class="lbl">G4 (Obsoletas)</span><span class="val" style="font-size: 1.1rem; color: #666; margin-top: 5px;">SKUs: <span id="g4-sku-val" style="color: #000; font-size: 1.4rem;">0</span></span><span class="val" id="g4-monto-val" style="color: #000; font-size: 1.6rem; margin-top: 5px;">$0.00</span></div>
+                    </div>
+                </div>
+
+                <!-- NUEVA POSICIÓN: ACCESORIOS DEBAJO DE OBSOLETOS -->
+                <div class="sub-table-container" style="width: 100%; margin-top: 25px;">
+                    <h4 class="sub-title" style="color: var(--spider-cyan);">VENTA DE ACCESORIOS</h4>
+                    <div id="tabla-accesorios-container" class="table-container">
+                        <p style="color:#aaa; font-style:italic; padding: 10px;">Sincronizando con base de datos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 2: ASESORES (50%) -->
+            <div class="asesores-wrapper-col" style="flex: 1; min-width: 0;">
+                <div class="comic-panel" style="margin-bottom: 15px; width: 100%; height: 160px; overflow: hidden; border: 3px solid var(--spider-cyan); box-shadow: 6px 6px 0px var(--spider-cyan);">
+                    <img src="MEDIA/GIF2.gif" alt="Acción Asesores" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="module-col comic-panel asesores-panel" style="width: 100%; margin: 0;">
+                    <h3 class="module-title" style="margin-bottom: 5px;">ASESORES</h3>
+                    <div id="asesores-fecha-act" style="text-align: center; color: var(--spider-cyan); font-family: 'Rajdhani', sans-serif; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px;">ÚLTIMA SINCRONIZACIÓN: BUSCANDO...</div>
+                    <div class="asesores-content-container">
+                        <h4 class="sub-title">OBJETIVO DE VENTAS</h4><div id="asesores-ventas-objetivos" style="margin-bottom: 25px;"></div>
+                        <h4 class="sub-title">OBJETIVOS Y KPIs (REFACCIONES)</h4><div id="asesores-kpi-refacciones" style="margin-bottom: 25px;"></div>
+                        <h4 class="sub-title">DESGLOSE DE COMISIONES</h4><div id="asesores-pagos-totales" style="margin-bottom: 25px;"></div>
+                        <h4 class="sub-title">CANTIDAD DE SERVICIOS</h4><div id="asesores-cantidad-servicios"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILA 2: CITAS (CON RETENCIÓN) Y TALLER -->
+        <div class="bottom-row" style="display: flex; gap: 25px; width: 100%;">
             
-            <div class="sub-table-container">
-                <h4 class="sub-title">COMPRAS VS OBJETIVOS</h4>
-                <table class="comic-table manual-table hard-lines dark-table">
-                    <thead>
-                        <tr><th>LÍNEAS</th><th>OBJETIVO</th><th>COMPRAS</th><th>ALCANCE</th><th>DIFERENCIA</th></tr>
+            <!-- MÓDULO 3: CITAS Y RETENCIÓN -->
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                <div class="comic-panel" style="margin-bottom: 15px; width: 100%; height: 140px; overflow: hidden; border: 3px solid var(--spider-cyan); box-shadow: 6px 6px 0px var(--spider-cyan);">
+                    <img src="MEDIA/GIF5.gif" alt="Acción Citas" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                
+                <div class="module-col comic-panel citas-panel" style="width: 100%; margin: 0; flex-grow: 1;">
+                    <h3 class="module-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>CITAS</span>
+                            <button class="btn-action spider-web-btn" style="font-size: 1.1rem; padding: 2px 10px; width: auto;" onclick="window.open('https://jefeindicadoresgc-hash.github.io/inicial-de-citas/', '_blank')">PAGE ⭧</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="color: var(--spider-cyan); font-family: 'Teko'; font-size: 1.4rem;">DÍA:</label>
+                            <select id="select-dia-citas" style="background:var(--bg-dark); color:#fff; border:2px solid var(--spider-cyan); font-family:'Teko'; font-size:1.3rem; padding: 2px 10px; border-radius: 5px; cursor: pointer;">
+                                <option value="ALL">MES COMPLETO</option>
+                            </select>
+                        </div>
+                    </h3>
+                    
+                    <h4 class="sub-title" style="margin-top: 5px;">NO SHOW</h4>
+                    <div class="comic-kpis compact-kpis mini-kpis">
+                        <div class="kpi-item stat-utilidad"><span class="lbl">TOTAL CITAS</span><span class="val" id="taller-citas-tot">0</span></div>
+                        <div class="kpi-item stat-faltante"><span class="lbl">NO SHOW</span><span class="val" id="taller-noshow-tot">0</span></div>
+                        <div class="kpi-item stat-alcance clickable-kpi" onclick="mostrarDetalleCitas('reagendadas')" title="Ver detalles"><span class="lbl">REAGENDADAS</span><span class="val" id="taller-reagendadas">0</span></div>
+                        <div class="kpi-item stat-faltante clickable-kpi" onclick="mostrarDetalleCitas('perdidas')" title="Ver detalles" style="box-shadow: 6px 6px 0 #000; background: var(--spider-red);"><span class="lbl" style="color:#fff;">PERDIDAS</span><span class="val" id="taller-perdidas" style="color:#fff;">0</span></div>
+                    </div>
+                    <div id="taller-motivos-container" class="table-container" style="margin-bottom: 25px;"></div>
+
+                    <!-- NUEVO MÓDULO: RETENCIÓN -->
+                    <h4 class="sub-title" style="margin-top: 5px; color: var(--spider-yellow); border-top: 2px dashed var(--spider-red); padding-top: 15px;">RETENCIÓN Y CAPACIDAD</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+                        <div class="comic-input-box" style="flex: 1; min-width: 100px; padding: 5px;">
+                            <label style="font-size:1rem;">Días (L-V):</label><input type="number" id="ret-dias-lv" value="22" onchange="calcularRetencion()">
+                        </div>
+                        <div class="comic-input-box" style="flex: 1; min-width: 100px; padding: 5px;">
+                            <label style="font-size:1rem;">Días (Sáb):</label><input type="number" id="ret-dias-sab" value="4" onchange="calcularRetencion()">
+                        </div>
+                        <div class="comic-input-box" style="flex: 1; min-width: 100px; padding: 5px;">
+                            <label style="font-size:1rem;">Técnicos:</label><input type="number" id="ret-tecnicos" value="5" onchange="calcularRetencion()">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div class="comic-input-box" style="flex: 1; background: var(--spider-purple); border-color: var(--spider-cyan);">
+                            <label style="color:#fff;">OBJ. MANTENIMIENTOS:</label>
+                            <input type="number" id="ret-obj-mant" value="300" step="10" onchange="calcularRetencion()">
+                        </div>
+                        <div class="comic-input-box" style="flex: 1; background: var(--spider-purple); border-color: var(--spider-cyan);">
+                            <label style="color:#fff;">OBJ. ÓRDENES NORMALES:</label>
+                            <input type="number" id="ret-obj-ord" value="250" step="10" onchange="calcularRetencion()">
+                        </div>
+                    </div>
+                    
+                    <div class="comic-kpis compact-kpis mini-kpis">
+                        <div class="kpi-item" style="box-shadow: 4px 4px 0 var(--spider-cyan);"><span class="lbl">MANT. REALES</span><span class="val" id="ret-mant-real">0</span><span class="val" id="ret-alcance-mant" style="font-size:1rem; color:var(--green-ok);">0%</span></div>
+                        <div class="kpi-item" style="box-shadow: 4px 4px 0 var(--spider-cyan);"><span class="lbl">ORD. NORMALES</span><span class="val" id="ret-ord-real">0</span><span class="val" id="ret-alcance-ord" style="font-size:1rem; color:var(--green-ok);">0%</span></div>
+                        <div class="kpi-item" style="background:#ffcc00; box-shadow: 4px 4px 0 #000;"><span class="lbl" style="color:#000;">OBJ. DIARIO</span><span class="val" id="ret-obj-diario" style="color:#000;">0</span><span class="val" id="ret-hrs-disp" style="font-size:1rem; color:#444;">0 Hrs Totales</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 4: TALLER -->
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                <div class="comic-panel" style="margin-bottom: 15px; width: 100%; height: 140px; overflow: hidden; border: 3px solid var(--spider-cyan); box-shadow: 6px 6px 0px var(--spider-cyan);">
+                    <img src="MEDIA/GIF4.gif" alt="Acción Taller" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                
+                <div class="module-col comic-panel taller-panel" style="width: 100%; margin: 0; flex-grow: 1;">
+                    <h3 class="module-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>TALLER</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="color: var(--spider-cyan); font-family: 'Teko'; font-size: 1.4rem;">DESDE:</label>
+                            <input type="date" id="taller-fecha-desde" style="background:var(--bg-dark); color:#fff; border:2px solid var(--spider-cyan); font-family:'Teko'; font-size:1.1rem; padding: 2px; border-radius: 3px; cursor: pointer;">
+                            <label style="color: var(--spider-cyan); font-family: 'Teko'; font-size: 1.4rem;">HASTA:</label>
+                            <input type="date" id="taller-fecha-hasta" style="background:var(--bg-dark); color:#fff; border:2px solid var(--spider-cyan); font-family:'Teko'; font-size:1.1rem; padding: 2px; border-radius: 3px; cursor: pointer;">
+                        </div>
+                    </h3>
+                    <h4 class="sub-title" style="margin-top: 5px;">MEZCLA DE TRABAJO</h4>
+                    <div class="comic-kpis compact-kpis mini-kpis">
+                        <div class="kpi-item" style="box-shadow: 6px 6px 0 #00f0ff;"><span class="lbl">MANTENIMIENTO</span><span class="val" id="mix-mant" style="color:#000;">0</span></div>
+                        <div class="kpi-item" style="box-shadow: 6px 6px 0 #ffc107;"><span class="lbl">REPARACIÓN</span><span class="val" id="mix-rep" style="color:#000;">0</span></div>
+                        <div class="kpi-item" style="box-shadow: 6px 6px 0 #e10024;"><span class="lbl">DIAGNÓSTICO</span><span class="val" id="mix-diag" style="color:#000;">0</span></div>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction: column; gap:20px; margin-top: 15px;">
+                        <div style="width: 100%;">
+                            <h4 class="sub-title" style="font-size: 1.4rem;">RENDIMIENTO TÉCNICO</h4>
+                            <div id="taller-tecnicos-container"></div>
+                        </div>
+                        <!-- NUEVO ESPACIO DE PERMISOS -->
+                        <div style="width: 100%; margin-top: 10px;">
+                            <h4 class="sub-title" style="font-size: 1.4rem; color: var(--spider-yellow);">TIEMPO PERDIDO O PERMISOS</h4>
+                            <div class="comic-panel-alt" style="display:flex; justify-content:center; align-items:center; height:80px; background:#111;">
+                                <span style="font-family:'Teko'; font-size:2rem; color:var(--spider-cyan); letter-spacing:2px; transform:rotate(-2deg);">PRÓXIMAMENTE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VENTANA MODAL PARA CITAS NO SHOW -->
+    <div id="citas-modal">
+        <div class="modal-box">
+            <h2 id="modal-titulo" class="module-title" style="margin-bottom: 15px;">DETALLE DE CITAS</h2>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto; background: var(--bg-dark); border: 2px solid var(--spider-red);">
+                <table class="comic-table dark-table" style="width: 100%;">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr><th style="text-align:left;">CLIENTE</th><th>TELÉFONO</th><th>VEHÍCULO</th><th>FECHA ORIG.</th><th>MOTIVO</th></tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>MOBIS</td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="obj-mobis" value="722096" onchange="calcRefacciones()"></div></td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="comp-mobis" value="491039" onchange="calcRefacciones()"></div></td>
-                            <td id="alc-mobis" style="font-weight: bold;">0%</td>
-                            <td id="dif-mobis">$0</td>
-                        </tr>
-                        <tr>
-                            <td>SEMI-SINTETICO</td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="obj-semi" value="118043" onchange="calcRefacciones()"></div></td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="comp-semi" value="0" onchange="calcRefacciones()"></div></td>
-                            <td id="alc-semi" style="font-weight: bold;">0%</td>
-                            <td id="dif-semi">$0</td>
-                        </tr>
-                        <tr>
-                            <td>SINTETICO</td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="obj-sint" value="33360" onchange="calcRefacciones()"></div></td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="comp-sint" value="168819" onchange="calcRefacciones()"></div></td>
-                            <td id="alc-sint" style="font-weight: bold;">0%</td>
-                            <td id="dif-sint">$0</td>
-                        </tr>
-                        <tr>
-                            <td>WURTH</td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="obj-wurth" value="98295" onchange="calcRefacciones()"></div></td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="comp-wurth" value="315795" onchange="calcRefacciones()"></div></td>
-                            <td id="alc-wurth" style="font-weight: bold;">0%</td>
-                            <td id="dif-wurth">$0</td>
-                        </tr>
-                        <tr>
-                            <td>LLANTAS</td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="obj-llantas" value="24169" onchange="calcRefacciones()"></div></td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="comp-llantas" value="42095" onchange="calcRefacciones()"></div></td>
-                            <td id="alc-llantas" style="font-weight: bold;">0%</td>
-                            <td id="dif-llantas">$0</td>
-                        </tr>
-                        <tr>
-                            <td>ACCESORIOS</td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="obj-acc" value="73237" onchange="calcRefacciones()"></div></td>
-                            <td><div class="input-cell"><span class="currency-symbol">$</span><input type="number" id="comp-acc" value="46719" onchange="calcRefacciones()"></div></td>
-                            <td id="alc-acc" style="font-weight: bold;">0%</td>
-                            <td id="dif-acc">$0</td>
-                        </tr>
-                        <tr class="row-total">
-                            <td>TOTALES</td>
-                            <td id="tot-obj-comp">$0</td>
-                            <td id="tot-comp">$0</td>
-                            <td id="tot-alc-comp" style="color:#000;">0%</td>
-                            <td id="tot-dif-comp">$0</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="modal-tbody"></tbody>
                 </table>
             </div>
-            
-            <!-- ========================================================= -->
-            <!-- SECCIÓN 7: REFACCIONES - GIF 3 (TRANSICIÓN CÓMIC)         -->
-            <!-- ========================================================= -->
-            <div class="comic-panel-alt" style="margin: 20px 0; width: 100%; height: 140px;">
-                <img src="GIF3.gif" alt="Transición Refacciones" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-
-            <!-- ========================================================= -->
-            <!-- SECCIÓN 8: REFACCIONES - VENTAS SIN IVA                   -->
-            <!-- ========================================================= -->
-            <div class="sub-table-container">
-                <h4 class="sub-title">VENTAS REFACCIONES (SIN IVA)</h4>
-                <table class="comic-table manual-table">
-                    <thead>
-                        <tr><th>LEYENDA</th><th>MOSTRADOR</th><th>TALLER</th><th>TOTAL</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Objetivo</td>
-                            <td><input type="number" id="obj-mostrador" value="142007" onchange="calcRefacciones()"></td>
-                            <td><input type="number" id="obj-taller" value="1501801.88" onchange="calcRefacciones()"></td>
-                            <td id="obj-tot-ref" style="font-weight:bold;">$0</td>
-                        </tr>
-                        <tr>
-                            <td>Venta</td>
-                            <td><input type="number" id="ven-mostrador" value="56437.43" onchange="calcRefacciones()"></td>
-                            <td><input type="number" id="ven-taller" value="543617.93" onchange="calcRefacciones()"></td>
-                            <td id="ven-tot-ref" style="font-weight:bold;">$0</td>
-                        </tr>
-                        <tr>
-                            <td>Costo</td>
-                            <td><input type="number" id="cos-mostrador" value="45578.64" onchange="calcRefacciones()"></td>
-                            <td><input type="number" id="cos-taller" value="399085.15" onchange="calcRefacciones()"></td>
-                            <td id="cos-tot-ref" style="font-weight:bold;">$0</td>
-                        </tr>
-                        <tr class="row-total">
-                            <td>Utilidad</td>
-                            <td id="ut-mostrador">$0</td>
-                            <td id="ut-taller">$0</td>
-                            <td id="ut-tot-ref">$0</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="text-align:center; margin-top: 10px; font-size: 1.4rem;">
-                    <span style="color:var(--spider-cyan); font-weight:bold; font-family:'Teko', sans-serif; letter-spacing:1px;">ALCANCE TOTAL: </span>
-                    <span id="alcance-tot-ref" style="color:var(--white); font-weight:bold; font-family:'Teko', sans-serif;">0%</span>
-                </div>
+            <div style="text-align: right; margin-top: 15px;">
+                <button class="btn-action" style="padding: 6px 20px; font-size: 1.4rem;" onclick="document.getElementById('citas-modal').style.display='none'">CERRAR X</button>
             </div>
         </div>
+    </div>
 
-        <!-- ========================================================= -->
-        <!-- SECCIÓN 9: ASESORES - GIF 2 Y ENCABEZADOS                 -->
-        <!-- ========================================================= -->
-        <div class="asesores-wrapper-col">
-            <!-- GIF FUERA DEL PANEL -->
-            <div class="comic-panel" style="margin-bottom: 15px; width: 100%; height: 160px; overflow: hidden; border: 3px solid var(--spider-cyan); box-shadow: 6px 6px 0px var(--spider-cyan);">
-                <img src="GIF2.gif" alt="Acción Asesores" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-
-            <div class="module-col comic-panel asesores-panel" style="width: 100%; margin: 0;">
-                <h3 class="module-title" style="margin-bottom: 5px;">ASESORES Y CITAS</h3>
-                <div id="asesores-fecha-act" style="text-align: center; color: var(--spider-cyan); font-family: 'Rajdhani', sans-serif; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px;">
-                    ÚLTIMA SINCRONIZACIÓN: BUSCANDO...
-                </div>
-
-                <!-- ========================================================= -->
-                <!-- SECCIÓN 10: ASESORES - TABLAS DE OBJETIVOS Y KPIS         -->
-                <!-- ========================================================= -->
-                <div class="asesores-content-container">
-                    <h4 class="sub-title">OBJETIVO DE VENTAS</h4>
-                    <div id="asesores-ventas-objetivos" style="margin-bottom: 25px;"></div>
-
-                    <h4 class="sub-title">OBJETIVOS Y KPIs (REFACCIONES)</h4>
-                    <div id="asesores-kpi-refacciones" style="margin-bottom: 25px;"></div>
-
-                    <!-- ========================================================= -->
-                    <!-- SECCIÓN 11: ASESORES - COMISIONES Y SERVICIOS             -->
-                    <!-- ========================================================= -->
-                    <h4 class="sub-title">DESGLOSE DE COMISIONES</h4>
-                    <div id="asesores-pagos-totales" style="margin-bottom: 25px;"></div>
-
-                    <h4 class="sub-title">CANTIDAD DE SERVICIOS</h4>
-                    <div id="asesores-cantidad-servicios"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================================= -->
-        <!-- SECCIÓN 12: TALLER Y CIERRE                               -->
-        <!-- ========================================================= -->
-        <div class="module-col comic-panel placeholder-module taller-panel">
-            <h3 class="module-title">TALLER</h3>
-            <div class="coming-soon">
-                <span>PRÓXIMAMENTE</span>
-            </div>
-        </div>
-
-    </div> <!-- Cierre de bottom-modules -->
-
-    <script src="script.js"></script>
+    <script src="JS/main.js"></script>
+    <script src="JS/rentabilidad.js"></script>
+    <script src="JS/refacciones.js"></script>
+    <script src="JS/asesores.js"></script>
+    <script src="JS/citas.js"></script>
+    <script src="JS/taller.js"></script>
 </body>
 </html>
