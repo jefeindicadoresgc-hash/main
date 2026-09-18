@@ -1,9 +1,11 @@
 // =========================================================
-// ARCHIVO: rentabilidad.js - RENTABILIDAD Y ÓRDENES
+// ARCHIVO: rentabilidad.js - RENTABILIDAD Y MATEMÁTICAS PURAS
 // =========================================================
 
 window.objAnioPasado = {}; 
+window.objFilaMemoria = {}; // NUEVO: Memoria para los objetivos de cada fila
 window.objOrdenesFacturadas = {}; 
+window.ordenesNormalesCount = 0; 
 
 document.addEventListener("DOMContentLoaded", () => {
     window.database.ref('notas').on('value', (snapshot) => {
@@ -58,6 +60,9 @@ window.analizarDatos = function(datos) {
         else if (semaforo === 'amarillo') { sec.countWarn++; sec.moneyWarn += importe; global.warn++; global.dineroWarn += importe; } 
         else { sec.countOk++; sec.moneyOk += importe; global.ok++; global.dineroOk += importe; }
     });
+
+    window.ordenesNormalesCount = secciones['N'].ordenes; 
+    if(typeof window.calcularRetencion === 'function') window.calcularRetencion();
 
     window.renderizarTablaTelemetria(secciones, global);
 }
@@ -162,32 +167,71 @@ window.procesarExcelOrdenesFacturadas = function(event) {
         window.objOrdenesFacturadas = conteo;
         window.calcularRentabilidad();
         
-        // DISPARADOR: Actualizamos Retención al instante para que lea el nuevo dato
         if(typeof window.calcularRetencion === 'function') window.calcularRetencion();
-
         alert("✅ Órdenes facturadas cargadas.");
     };
     reader.readAsArrayBuffer(file);
     event.target.value = '';
 };
 
-window.calcularRentabilidad = function() {
-    let objetivoMensual = parseFloat(document.getElementById('input-objetivo').value) || 0;
+// =========================================================
+// FUNCIONES PARA GUARDAR OBJETIVOS MANUALES EN MEMORIA
+// =========================================================
+window.actualizarObjFila = function(el) {
+    let seccion = el.getAttribute('data-seccion');
+    window.objFilaMemoria[seccion] = parseFloat(el.value) || 0;
     
     let mes = document.getElementById('select-mes').value;
     let anio = document.getElementById('select-anio').value;
+    localStorage.setItem(`objFila_${anio}_${mes}`, JSON.stringify(window.objFilaMemoria));
+    
+    window.calcularRentabilidad(); 
+};
+
+window.actualizarAnioPasado = function(el) {
+    let seccion = el.getAttribute('data-seccion');
+    window.objAnioPasado[seccion] = parseInt(el.value) || 0;
+    
+    let mes = document.getElementById('select-mes').value;
+    let anio = document.getElementById('select-anio').value;
+    localStorage.setItem(`anioPasado_${anio}_${mes}`, JSON.stringify(window.objAnioPasado));
+    
+    window.calcularRentabilidad(); 
+};
+
+// =========================================================
+// CORAZÓN MATEMÁTICO: OBJETIVOS POR FILA VS VENTA (S/IVA)
+// =========================================================
+window.calcularRentabilidad = function() {
+    let objetivoMensual = parseFloat(document.getElementById('input-objetivo').value) || 0;
+    let mes = document.getElementById('select-mes').value;
+    let anio = document.getElementById('select-anio').value;
+    
     localStorage.setItem(`objetivo_${anio}_${mes}`, objetivoMensual);
+
+    // Intentamos cargar la memoria si está vacía en la sesión
+    let storedObjFila = localStorage.getItem(`objFila_${anio}_${mes}`);
+    if (storedObjFila && Object.keys(window.objFilaMemoria).length === 0) window.objFilaMemoria = JSON.parse(storedObjFila);
+    
+    let storedAnioPas = localStorage.getItem(`anioPasado_${anio}_${mes}`);
+    if (storedAnioPas && Object.keys(window.objAnioPasado).length === 0) window.objAnioPasado = JSON.parse(storedAnioPas);
 
     let html = "";
     let sumVentasS_IVA = 0, sumCostos = 0, sumUtilidad = 0;
     let sumOrdTotal = 0; let sumAnioPasTotal = 0; 
+    let sumObjFilaTotal = 0;
 
     if (window.datosRentabilidad && window.datosRentabilidad.items && window.datosRentabilidad.items.length > 0) {
         window.datosRentabilidad.items.forEach(item => {
             let ventaSinIva = item.ventaBruta / 1.16;
             let participacion = window.datosRentabilidad.totalGlobal > 0 ? (item.ventaBruta / window.datosRentabilidad.totalGlobal) : 0;
-            let objSeccion = objetivoMensual * participacion;
-            let alcance = objSeccion > 0 ? (item.utilidad / objSeccion) * 100 : 0;
+            
+            // LECTURA DEL OBJETIVO MANUAL
+            let objSeccion = window.objFilaMemoria[item.nombre] || 0;
+            sumObjFilaTotal += objSeccion;
+
+            // ALCANCE = VENTA S/IVA / OBJETIVO DE LA FILA
+            let alcance = objSeccion > 0 ? (ventaSinIva / objSeccion) * 100 : 0;
 
             sumVentasS_IVA += ventaSinIva; sumCostos += item.costo; sumUtilidad += item.utilidad;
             let colorAlcance = alcance >= 100 ? '#28a745' : (alcance >= 50 ? '#ffc107' : '#e10024');
@@ -199,7 +243,8 @@ window.calcularRentabilidad = function() {
             html += `<tr><td style="text-align:left; font-weight:900; color:#000;">${item.nombre}</td>
                     <td>${window.mxnFormat.format(ventaSinIva)}</td><td>${window.mxnFormat.format(item.costo)}</td>
                     <td style="color:#000; font-weight:bold; font-size:1.1rem;">${window.mxnFormat.format(item.utilidad)}</td>
-                    <td>${(participacion * 100).toFixed(0)}%</td><td>${window.mxnFormat.format(objSeccion)}</td>
+                    <td>${(participacion * 100).toFixed(0)}%</td>
+                    <td><input type="number" data-seccion="${item.nombre}" value="${objSeccion}" onchange="window.actualizarObjFila(this)" style="width:100px; background:#e0e0e0; border:2px solid #000; font-family:'Teko', sans-serif; font-size:1.3rem; font-weight:bold; text-align:center;"></td>
                     <td style="color:${colorAlcance}; font-weight:bold; font-size:1.1rem;">${alcance.toFixed(0)}%</td>
                     <td style="color:${colorOrd}; font-weight:bold; font-size:1.4rem; text-shadow:1px 1px 0px #000;">${ordVal}</td>
                     <td><input type="number" class="anio-pas-input" data-seccion="${item.nombre}" value="${anioPasVal}" onchange="window.actualizarAnioPasado(this)" style="width:70px; background:#e0e0e0; border:2px solid #000; font-family:'Teko', sans-serif; font-size:1.3rem; font-weight:bold; text-align:center;"></td>
@@ -209,24 +254,31 @@ window.calcularRentabilidad = function() {
         html += `<tr><td colspan="9" class="empty-msg">Sin datos de ventas para este mes... Mostrando solo la suma de Refacciones.</td></tr>`;
     }
 
-    sumUtilidad += (window.utilidadMostrador || 0);
-    
-    let alcanceTotal = objetivoMensual > 0 ? (sumUtilidad / objetivoMensual) * 100 : 0;
-    let faltante = objetivoMensual - sumUtilidad; if (faltante < 0) faltante = 0;
+    // ALCANCE DE LA TABLA = Venta S/IVA Total / Sumatoria de Objetivos
+    let alcanceFilaGlobal = sumObjFilaTotal > 0 ? (sumVentasS_IVA / sumObjFilaTotal) * 100 : 0;
 
     html += `<tr class="row-total"><td style="text-align:left;">TOTALES</td>
             <td>${window.mxnFormat.format(sumVentasS_IVA)}</td><td>${window.mxnFormat.format(sumCostos)}</td>
             <td style="color:#000;">${window.mxnFormat.format(sumUtilidad)}</td><td>100%</td>
-            <td>${window.mxnFormat.format(objetivoMensual)}</td>
-            <td style="color: ${alcanceTotal >= 100 ? '#28a745' : '#e10024'}">${alcanceTotal.toFixed(0)}%</td>
+            <td>${window.mxnFormat.format(sumObjFilaTotal)}</td>
+            <td style="color: ${alcanceFilaGlobal >= 100 ? '#28a745' : '#e10024'}">${alcanceFilaGlobal.toFixed(0)}%</td>
             <td style="color:#000; font-weight:bold; font-size:1.4rem;">${sumOrdTotal}</td>
             <td style="color:#000; font-weight:bold; font-size:1.4rem;">${sumAnioPasTotal}</td></tr>`;
 
     let tbody = document.getElementById('tbody-rentabilidad');
     if(tbody) tbody.innerHTML = html;
+
+    // =========================================================
+    // KPIs GLOBALES SUPERIORES (Se mantienen independientes)
+    // =========================================================
+    sumUtilidad += (window.utilidadMostrador || 0);
+    
+    let alcanceRealTop = objetivoMensual > 0 ? (sumUtilidad / objetivoMensual) * 100 : 0;
+    let faltanteRealTop = objetivoMensual - sumUtilidad; if (faltanteRealTop < 0) faltanteRealTop = 0;
+
     if(document.getElementById('kpi-utilidad')) document.getElementById('kpi-utilidad').innerText = window.mxnFormat.format(sumUtilidad);
-    if(document.getElementById('kpi-alcance')) document.getElementById('kpi-alcance').innerText = alcanceTotal.toFixed(1) + "%";
-    if(document.getElementById('kpi-faltante')) document.getElementById('kpi-faltante').innerText = window.mxnFormat.format(faltante);
+    if(document.getElementById('kpi-alcance')) document.getElementById('kpi-alcance').innerText = alcanceRealTop.toFixed(1) + "%";
+    if(document.getElementById('kpi-faltante')) document.getElementById('kpi-faltante').innerText = window.mxnFormat.format(faltanteRealTop);
 };
 
 window.exportarTodoAExcel = async function() {
