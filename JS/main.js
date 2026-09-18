@@ -1,5 +1,5 @@
 // =========================================================
-// ARCHIVO: main.js - NÚCLEO Y CONEXIONES (RESTAURADO)
+// ARCHIVO: main.js - NÚCLEO, CONEXIONES Y MEMORIA
 // =========================================================
 
 const configOrdenes = {
@@ -41,6 +41,7 @@ window.mxnFormat = new Intl.NumberFormat('es-MX', { style: 'currency', currency:
 window.datosRentabilidad = { totalGlobal: 0, items: [] };
 window.utilidadMostrador = 0;
 window.datosAsesores = { caratula: {}, kpi_config: {}, kpi_data: {}, servicios: {}, historial: {} };
+window.objFilaMemoria = {}; // <-- Variable global asegurada
 
 document.addEventListener("DOMContentLoaded", () => {
     let now = new Date();
@@ -114,6 +115,7 @@ window.subirSnapshotMes = function() {
         ordenesNotas: window.DB_NOTAS_COMPARTIDAS,
         ordenesMemoria: window.objOrdenesFacturadas || {}, 
         anioPasadoMemoria: window.objAnioPasado || {},
+        objetivosFilaMemoria: window.objFilaMemoria || {}, // <-- AHORA SÍ VIAJA A LA NUBE
         retencionConfig: {
             diasLV: document.getElementById('ret-dias-lv')?.value || 22,
             diasSab: document.getElementById('ret-dias-sab')?.value || 4,
@@ -138,11 +140,10 @@ window.cargarSnapshotMes = function(silent = false) {
     let anio = document.getElementById('select-anio').value;
     let clave = `${anio}_${mes}`;
 
-    // SE RESPETA EL OBJETIVO POR DEFECTO
     document.getElementById('input-objetivo').value = 1000000; 
     document.getElementById('rentabilidad-fecha-act').innerText = "ÚLT. ACT: BUSCANDO...";
     
-    window.objOrdenesFacturadas = {}; window.objAnioPasado = {};
+    window.objOrdenesFacturadas = {}; window.objAnioPasado = {}; window.objFilaMemoria = {};
     window.datosRentabilidad = { items: [], totalGlobal: 0 };
     if(typeof calcularRentabilidad === 'function') window.calcularRentabilidad();
     
@@ -169,6 +170,10 @@ window.cargarSnapshotMes = function(silent = false) {
                 
                 if (data.ordenesMemoria) window.objOrdenesFacturadas = data.ordenesMemoria;
                 if (data.anioPasadoMemoria) window.objAnioPasado = data.anioPasadoMemoria;
+                
+                // LECTURA DE LOS OBJETIVOS POR FILA DESDE LA NUBE
+                if (data.objetivosFilaMemoria) window.objFilaMemoria = data.objetivosFilaMemoria;
+                
                 if (data.rentabilidad) { window.datosRentabilidad = data.rentabilidad; if(typeof calcularRentabilidad === 'function') window.calcularRentabilidad(); }
                 if (data.asesores) { window.datosAsesores = data.asesores; if(typeof construirTablasAsesores === 'function') window.construirTablasAsesores(); }
                 
