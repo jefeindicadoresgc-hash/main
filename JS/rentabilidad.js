@@ -3,7 +3,7 @@
 // =========================================================
 
 window.objAnioPasado = {}; 
-window.objFilaMemoria = {}; // NUEVO: Memoria para los objetivos de cada fila
+window.objFilaMemoria = {}; 
 window.objOrdenesFacturadas = {}; 
 window.ordenesNormalesCount = 0; 
 
@@ -109,36 +109,51 @@ window.procesarExcelVentas = function(event) {
     event.target.value = '';
 };
 
+// =========================================================
+// CORAZÓN LECTOR DE EXCEL (A PRUEBA DE INICIOS DE MES)
+// =========================================================
 window.extraerDatosDeResumen = function(rows) {
     let rowCabeceras = -1;
     for (let i = rows.length - 1; i >= 0; i--) {
         let filaTexto = rows[i].join(" ").toUpperCase();
-        if (filaTexto.includes("ASEGURADORAS") && filaTexto.includes("GARANTIAS") && filaTexto.includes("NORMAL")) {
+        // Criterio Relajado: Solo exigimos que exista NORMAL y TOTAL en la fila
+        if (filaTexto.includes("NORMAL") && filaTexto.includes("TOTAL")) {
             rowCabeceras = i; break;
         }
     }
+    
     if (rowCabeceras === -1) { alert("No se encontró la sección de Totales al final del Excel."); return; }
 
-    let headers = rows[rowCabeceras]; let ventasRow = rows[rowCabeceras + 1]; let costosRow = rows[rowCabeceras + 2];
+    let headers = rows[rowCabeceras]; 
+    let ventasRow = rows[rowCabeceras + 1]; 
+    let costosRow = rows[rowCabeceras + 2];
+
+    // Búsqueda robusta (Singular y sin acentos para evitar errores del sistema de origen)
     const buscarCol = (nombre) => headers.findIndex(c => String(c).toUpperCase().includes(nombre));
     let seccionesInfo = [
-        { id: 'aseg', nombre: 'Aseguradoras', idx: buscarCol("ASEGURADORAS") },
-        { id: 'gar', nombre: 'Garantías', idx: buscarCol("GARANTIAS") },
+        { id: 'aseg', nombre: 'Aseguradoras', idx: buscarCol("ASEGURADORA") },
+        { id: 'gar', nombre: 'Garantías', idx: buscarCol("GARANTIA") },
         { id: 'nor', nombre: 'Normal', idx: buscarCol("NORMAL") },
-        { id: 'prev', nombre: 'Previas', idx: buscarCol("PREVIAS") },
-        { id: 'semi', nombre: 'Seminuevos', idx: buscarCol("SEMINUEVOS") }
+        { id: 'prev', nombre: 'Previas', idx: buscarCol("PREVIA") },
+        { id: 'semi', nombre: 'Seminuevos', idx: buscarCol("SEMINUEVO") }
     ];
 
-    let totalVentasC_IVA = 0; window.datosRentabilidad.items = [];
+    let totalVentasC_IVA = 0; 
+    window.datosRentabilidad.items = [];
+    
     seccionesInfo.forEach(sec => {
-        if(sec.idx !== -1) {
+        if(sec.idx !== -1) { // Si el departamento sí facturó este mes
             let ventaBruta = parseFloat(ventasRow[sec.idx]) || 0;
             let costo = parseFloat(costosRow[sec.idx]) || 0;
             totalVentasC_IVA += ventaBruta;
             let ventaSinIva = ventaBruta / 1.16;
             window.datosRentabilidad.items.push({ nombre: sec.nombre, ventaBruta: ventaBruta, costo: costo, utilidad: (ventaSinIva - costo) });
+        } else {
+            // SALVAVIDAS: Si no vendió, lo creamos en ceros para que no desaparezca la fila
+            window.datosRentabilidad.items.push({ nombre: sec.nombre, ventaBruta: 0, costo: 0, utilidad: 0 });
         }
     });
+    
     window.datosRentabilidad.items.push({ nombre: 'Internas', ventaBruta: 0, costo: 0, utilidad: 0 });
     window.datosRentabilidad.totalGlobal = totalVentasC_IVA;
     window.calcularRentabilidad();
@@ -226,11 +241,9 @@ window.calcularRentabilidad = function() {
             let ventaSinIva = item.ventaBruta / 1.16;
             let participacion = window.datosRentabilidad.totalGlobal > 0 ? (item.ventaBruta / window.datosRentabilidad.totalGlobal) : 0;
             
-            // LECTURA DEL OBJETIVO MANUAL
             let objSeccion = window.objFilaMemoria[item.nombre] || 0;
             sumObjFilaTotal += objSeccion;
 
-            // ALCANCE = VENTA S/IVA / OBJETIVO DE LA FILA
             let alcance = objSeccion > 0 ? (ventaSinIva / objSeccion) * 100 : 0;
 
             sumVentasS_IVA += ventaSinIva; sumCostos += item.costo; sumUtilidad += item.utilidad;
@@ -254,7 +267,6 @@ window.calcularRentabilidad = function() {
         html += `<tr><td colspan="9" class="empty-msg">Sin datos de ventas para este mes... Mostrando solo la suma de Refacciones.</td></tr>`;
     }
 
-    // ALCANCE DE LA TABLA = Venta S/IVA Total / Sumatoria de Objetivos
     let alcanceFilaGlobal = sumObjFilaTotal > 0 ? (sumVentasS_IVA / sumObjFilaTotal) * 100 : 0;
 
     html += `<tr class="row-total"><td style="text-align:left;">TOTALES</td>
@@ -269,7 +281,7 @@ window.calcularRentabilidad = function() {
     if(tbody) tbody.innerHTML = html;
 
     // =========================================================
-    // KPIs GLOBALES SUPERIORES (Se mantienen independientes)
+    // KPIs GLOBALES SUPERIORES
     // =========================================================
     sumUtilidad += (window.utilidadMostrador || 0);
     
