@@ -1,5 +1,5 @@
 // =========================================================
-// ARCHIVO: rentabilidad.js - ESTADO IDEAL Y RENTABILIDAD
+// ARCHIVO: rentabilidad.js - UTILIDAD ESPERADA INYECTADA
 // =========================================================
 
 window.objAnioPasado = {}; 
@@ -118,7 +118,11 @@ window.extraerDatosDeResumen = function(rows) {
         }
     }
     
-    if (rowCabeceras === -1) { alert("No se encontró la sección de Totales al final del Excel."); return; }
+    if (rowCabeceras === -1) { 
+        if(typeof window.mostrarAlertaSpidey === 'function') window.mostrarAlertaSpidey("No se encontró la sección de Totales al final del Excel.");
+        else alert("No se encontró la sección de Totales al final del Excel."); 
+        return; 
+    }
 
     let headers = rows[rowCabeceras]; 
     let ventasRow = rows[rowCabeceras + 1]; 
@@ -177,15 +181,12 @@ window.procesarExcelOrdenesFacturadas = function(event) {
         window.calcularRentabilidad();
         
         if(typeof window.calcularRetencion === 'function') window.calcularRetencion();
-        alert("✅ Órdenes facturadas cargadas.");
+        if(typeof window.mostrarAlertaSpidey === 'function') window.mostrarAlertaSpidey("✅ Órdenes facturadas cargadas.");
     };
     reader.readAsArrayBuffer(file);
     event.target.value = '';
 };
 
-// =========================================================
-// GUARDADO DE OBJETIVOS MANUALES EN MEMORIA
-// =========================================================
 window.actualizarObjFila = function(el) {
     let seccion = el.getAttribute('data-seccion');
     window.objFilaMemoria[seccion] = parseFloat(el.value) || 0;
@@ -208,9 +209,6 @@ window.actualizarAnioPasado = function(el) {
     window.calcularRentabilidad(); 
 };
 
-// =========================================================
-// CORAZÓN MATEMÁTICO: ESTADO IDEAL, RENTABILIDAD Y ALCANCES
-// =========================================================
 window.calcularRentabilidad = function() {
     let objetivoMensual = parseFloat(document.getElementById('input-objetivo').value) || 0;
     let mes = document.getElementById('select-mes').value;
@@ -246,7 +244,6 @@ window.calcularRentabilidad = function() {
             let anioPasVal = window.objAnioPasado[item.nombre] || 0; sumAnioPasTotal += anioPasVal; 
             let colorOrd = '#fff'; if (ordVal > 0 || anioPasVal > 0) { colorOrd = ordVal >= anioPasVal ? '#28a745' : '#e10024'; }
 
-            // SE APLICÓ LA NUEVA FUENTE RAJDHANI A LOS INPUTS
             html += `<tr><td style="text-align:left; font-weight:900; color:#000;">${item.nombre}</td>
                     <td>${window.mxnFormat.format(ventaSinIva)}</td><td>${window.mxnFormat.format(item.costo)}</td>
                     <td style="color:#000; font-weight:bold; font-size:1.1rem;">${window.mxnFormat.format(item.utilidad)}</td>
@@ -274,9 +271,6 @@ window.calcularRentabilidad = function() {
     let tbody = document.getElementById('tbody-rentabilidad');
     if(tbody) tbody.innerHTML = html;
 
-    // =========================================================
-    // KPIs GLOBALES SUPERIORES Y CÁLCULO DE ESTADO IDEAL
-    // =========================================================
     sumUtilidad += (window.utilidadMostrador || 0);
     
     let alcanceRealTop = objetivoMensual > 0 ? (sumUtilidad / objetivoMensual) * 100 : 0;
@@ -286,25 +280,23 @@ window.calcularRentabilidad = function() {
     if(document.getElementById('kpi-alcance')) document.getElementById('kpi-alcance').innerText = alcanceRealTop.toFixed(1) + "%";
     if(document.getElementById('kpi-faltante')) document.getElementById('kpi-faltante').innerText = window.mxnFormat.format(faltanteRealTop);
 
-    // CÁLCULO DEL ESTADO IDEAL (RITMO DE CARRERA)
+    // CÁLCULO DE META DIARIA Y UTILIDAD ESPERADA AL DÍA DE HOY
     let diasLV = parseFloat(document.getElementById('ret-dias-lv')?.value) || 22;
     let diasSab = parseFloat(document.getElementById('ret-dias-sab')?.value) || 4;
     let totalDiasMes = diasLV + diasSab;
     
     let metaDiaria = totalDiasMes > 0 ? (objetivoMensual / totalDiasMes) : 0;
     
-    // Contabilizar días transcurridos hasta HOY (sin contar domingos)
-    let mesObj = parseInt(mes) - 1; // 0-11
+    let mesObj = parseInt(mes) - 1; 
     let anioObj = parseInt(anio);
     let hoy = new Date();
     let diasTranscurridos = 0;
     
     if (hoy.getFullYear() > anioObj || (hoy.getFullYear() === anioObj && hoy.getMonth() > mesObj)) {
-        diasTranscurridos = totalDiasMes; // Ya pasó el mes completo
+        diasTranscurridos = totalDiasMes; 
     } else if (hoy.getFullYear() < anioObj || (hoy.getFullYear() === anioObj && hoy.getMonth() < mesObj)) {
-        diasTranscurridos = 0; // Mes futuro
+        diasTranscurridos = 0; 
     } else {
-        // Estamos en el mes actual. Contamos desde el día 1 hasta hoy (excluyendo domingos = 0)
         for (let d = 1; d <= hoy.getDate(); d++) {
             let diaCiclo = new Date(anioObj, mesObj, d);
             if (diaCiclo.getDay() !== 0) diasTranscurridos++;
@@ -313,15 +305,18 @@ window.calcularRentabilidad = function() {
     }
 
     let ritmoActual = diasTranscurridos > 0 ? (sumUtilidad / diasTranscurridos) : 0;
+    let utilidadEsperada = metaDiaria * diasTranscurridos;
 
-    // INYECTAR EN EL HTML DEL RECUADRO 4
     if(document.getElementById('kpi-ritmo')) {
         document.getElementById('kpi-ritmo').innerText = window.mxnFormat.format(ritmoActual) + ' / Día';
-        // Si el ritmo actual supera o empata la meta, vamos verdes. Si no, alerta roja.
         document.getElementById('kpi-ritmo').style.color = ritmoActual >= metaDiaria ? 'var(--green-ok)' : 'var(--spider-red)';
     }
     if(document.getElementById('kpi-meta-diaria')) {
         document.getElementById('kpi-meta-diaria').innerText = 'META DIARIA: ' + window.mxnFormat.format(metaDiaria);
+    }
+    // INYECCIÓN DE LA UTILIDAD ESPERADA
+    if(document.getElementById('kpi-utilidad-esperada')) {
+        document.getElementById('kpi-utilidad-esperada').innerText = 'ESPERADO: ' + window.mxnFormat.format(utilidadEsperada);
     }
 };
 
