@@ -1,5 +1,5 @@
 // =========================================================
-// ARCHIVO: main.js - NÚCLEO, CONEXIONES Y MEMORIA
+// ARCHIVO: main.js - NÚCLEO Y ATAJO CTRL+S
 // =========================================================
 
 const configOrdenes = {
@@ -41,7 +41,7 @@ window.mxnFormat = new Intl.NumberFormat('es-MX', { style: 'currency', currency:
 window.datosRentabilidad = { totalGlobal: 0, items: [] };
 window.utilidadMostrador = 0;
 window.datosAsesores = { caratula: {}, kpi_config: {}, kpi_data: {}, servicios: {}, historial: {} };
-window.objFilaMemoria = {}; // <-- Variable global asegurada
+window.objFilaMemoria = {}; 
 
 document.addEventListener("DOMContentLoaded", () => {
     let now = new Date();
@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const introVideo = document.getElementById('intro-video');
     let secretBuffer = "";
 
+    // INTRO ALEATORIO
     if(introVideo) {
         const introsDisponibles = ['INTRO.mp4', 'INTRO1.mp4', 'INTRO2.mp4', 'INTRO3.mp4', 'INTRO4.mp4', 'INTRO5.mp4'];
         const introElegido = introsDisponibles[Math.floor(Math.random() * introsDisponibles.length)];
@@ -84,7 +85,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // ATAJOS DE TECLADO GLOBALES
     window.addEventListener('keydown', (e) => {
+        // Atajo: Ctrl + S (Guardar Mes)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault(); // Evita que se abra la ventana de "Guardar Página" del navegador
+            if(typeof subirSnapshotMes === 'function') window.subirSnapshotMes();
+            return;
+        }
+
+        // Atajo Secreto: 2099 (Saltar Intro)
         if(!introScreen || introScreen.style.display === 'none') return;
         secretBuffer += e.key;
         if(secretBuffer.length > 4) secretBuffer = secretBuffer.slice(-4);
@@ -115,7 +125,7 @@ window.subirSnapshotMes = function() {
         ordenesNotas: window.DB_NOTAS_COMPARTIDAS,
         ordenesMemoria: window.objOrdenesFacturadas || {}, 
         anioPasadoMemoria: window.objAnioPasado || {},
-        objetivosFilaMemoria: window.objFilaMemoria || {}, // <-- AHORA SÍ VIAJA A LA NUBE
+        objetivosFilaMemoria: window.objFilaMemoria || {}, 
         retencionConfig: {
             diasLV: document.getElementById('ret-dias-lv')?.value || 22,
             diasSab: document.getElementById('ret-dias-sab')?.value || 4,
@@ -170,8 +180,6 @@ window.cargarSnapshotMes = function(silent = false) {
                 
                 if (data.ordenesMemoria) window.objOrdenesFacturadas = data.ordenesMemoria;
                 if (data.anioPasadoMemoria) window.objAnioPasado = data.anioPasadoMemoria;
-                
-                // LECTURA DE LOS OBJETIVOS POR FILA DESDE LA NUBE
                 if (data.objetivosFilaMemoria) window.objFilaMemoria = data.objetivosFilaMemoria;
                 
                 if (data.rentabilidad) { window.datosRentabilidad = data.rentabilidad; if(typeof calcularRentabilidad === 'function') window.calcularRentabilidad(); }
