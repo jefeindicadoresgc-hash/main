@@ -1,5 +1,5 @@
 // =========================================================
-// ARCHIVO: main.js - NÚCLEO Y ATAJO CTRL+S
+// ARCHIVO: main.js - NÚCLEO SIN INTRO Y CON ALERTAS CÓMIC
 // =========================================================
 
 const configOrdenes = {
@@ -43,6 +43,12 @@ window.utilidadMostrador = 0;
 window.datosAsesores = { caratula: {}, kpi_config: {}, kpi_data: {}, servicios: {}, historial: {} };
 window.objFilaMemoria = {}; 
 
+// NUEVA ALERTA SPIDER-MAN
+window.mostrarAlertaSpidey = function(mensaje) {
+    document.getElementById('spidey-alert-msg').innerText = mensaje;
+    document.getElementById('spidey-alert-modal').style.display = 'flex';
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     let now = new Date();
     let mesActual = String(now.getMonth() + 1).padStart(2, '0');
@@ -64,50 +70,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elMes) { elMes.addEventListener('change', () => { window.cargarSnapshotMes(true); }); }
     if (elAnio) { elAnio.addEventListener('change', () => { window.cargarSnapshotMes(true); }); }
 
+    // Quitar intro inmediatamente
+    let introScreen = document.getElementById('intro-screen');
+    if(introScreen) {
+        introScreen.style.display = 'none';
+    }
+
     setTimeout(() => { if(typeof cargarSnapshotMes === 'function') cargarSnapshotMes(true); }, 500);
-
-    const introScreen = document.getElementById('intro-screen');
-    const introLogo = document.getElementById('intro-logo');
-    const introVideo = document.getElementById('intro-video');
-    let secretBuffer = "";
-
-    // INTRO ALEATORIO
-    if(introVideo) {
-        const introsDisponibles = ['INTRO.mp4', 'INTRO1.mp4', 'INTRO2.mp4', 'INTRO3.mp4', 'INTRO4.mp4', 'INTRO5.mp4'];
-        const introElegido = introsDisponibles[Math.floor(Math.random() * introsDisponibles.length)];
-        introVideo.src = 'MEDIA/' + introElegido;
-    }
-
-    if(introLogo) {
-        introLogo.addEventListener('click', () => {
-            introLogo.style.display = 'none';
-            if(introVideo) { introVideo.style.display = 'block'; introVideo.play(); }
-        });
-    }
 
     // ATAJOS DE TECLADO GLOBALES
     window.addEventListener('keydown', (e) => {
         // Atajo: Ctrl + S (Guardar Mes)
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-            e.preventDefault(); // Evita que se abra la ventana de "Guardar Página" del navegador
+            e.preventDefault(); 
             if(typeof subirSnapshotMes === 'function') window.subirSnapshotMes();
             return;
-        }
-
-        // Atajo Secreto: 2099 (Saltar Intro)
-        if(!introScreen || introScreen.style.display === 'none') return;
-        secretBuffer += e.key;
-        if(secretBuffer.length > 4) secretBuffer = secretBuffer.slice(-4);
-        if(secretBuffer === "2099") {
-            if(introVideo) introVideo.pause(); 
-            introScreen.style.opacity = '0'; 
-            setTimeout(() => { introScreen.style.display = 'none'; }, 1000);
         }
     });
 });
 
 window.toggleDrawer = function() { document.getElementById('side-drawer').classList.toggle('open'); };
-window.toggleDrawerAcc = function() { document.getElementById('side-drawer-acc').classList.toggle('open'); };
 
 window.subirSnapshotMes = function() {
     if (!window.dbFirestore) return;
@@ -137,11 +119,11 @@ window.subirSnapshotMes = function() {
 
     window.dbFirestore.collection('historico_mensual').doc(clave).set(snapshotCompleto) 
         .then(() => { 
-            alert(`¡Datos del mes ${mes}/${anio} guardados correctamente en la nube! ☁`); 
+            window.mostrarAlertaSpidey(`¡Datos del mes ${mes}/${anio} guardados correctamente en la nube! ☁`); 
             document.getElementById('rentabilidad-fecha-act').innerText = "ÚLT. ACT: " + fechaGuardado;
             localStorage.removeItem(`objetivo_${anio}_${mes}`);
         })
-        .catch((error) => { console.error("Error: ", error); alert("Error al subir info: " + error.message); });
+        .catch((error) => { console.error("Error: ", error); window.mostrarAlertaSpidey("Error al subir info: " + error.message); });
 };
 
 window.cargarSnapshotMes = function(silent = false) {
@@ -194,7 +176,7 @@ window.cargarSnapshotMes = function(silent = false) {
                 }
                 if(typeof window.calcularRetencion === 'function') window.calcularRetencion();
 
-                if(!silent) alert(`Datos del mes ${mes}/${anio} cargados con éxito. 🔍`);
+                if(!silent) window.mostrarAlertaSpidey(`Datos del mes ${mes}/${anio} cargados con éxito. 🔍`);
             } else { 
                 document.getElementById('rentabilidad-fecha-act').innerText = "ÚLT. ACT: SIN DATOS";
                 if (objLocalGuardado) document.getElementById('input-objetivo').value = objLocalGuardado;
