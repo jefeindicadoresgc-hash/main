@@ -18,14 +18,7 @@
 </head>
 <body>
 
-    <div id="intro-screen" class="intro-overlay">
-        <div id="intro-content">
-            <img src="MEDIA/logo_intro.png" id="intro-logo" alt="Iniciar Sistema" title="Haga clic para iniciar">
-            <video id="intro-video" src="MEDIA/INTRO.mp4" playsinline></video>
-        </div>
-    </div>
-
-    <!-- CAJONES LATERALES -->
+    <!-- CAJÓN LATERAL (ÓRDENES) -->
     <aside id="side-drawer" class="side-drawer"> 
         <div class="drawer-content">
             <div class="subtitle-row">
@@ -38,18 +31,6 @@
             </main>
         </div>
         <div class="drawer-tab" onclick="toggleDrawer()"><span>O</span><span>R</span><span>D</span><span>E</span><span>N</span><span>E</span><span>S</span></div>
-    </aside>
-
-    <aside id="side-drawer-acc" class="side-drawer-acc"> 
-        <div class="drawer-content">
-            <div class="subtitle-row">
-                <h2 class="kpi-subtitle" style="color: var(--spider-cyan);">VENTA DE ACCESORIOS</h2>
-            </div>
-            <main class="telemetry-panel">
-                <div id="tabla-accesorios-container" class="table-responsive"><p style="color:#aaa; font-style:italic; padding-top: 10px;">Sincronizando con base de datos...</p></div>
-            </main>
-        </div>
-        <div class="drawer-tab-acc" onclick="toggleDrawerAcc()"><span>A</span><span>C</span><span>C</span><span>.</span></div>
     </aside>
 
     <!-- CABECERA PRINCIPAL Y RENTABILIDAD -->
@@ -105,11 +86,12 @@
                     </div>
                 </div>
 
-                <!-- AHORA TENEMOS 4 CAJAS PRINCIPALES (SE AGREGÓ ESTADO IDEAL) -->
                 <div class="comic-kpis compact-kpis">
                     <div class="kpi-item stat-utilidad">
                         <span class="lbl">UTILIDAD REAL</span>
                         <span class="val" id="kpi-utilidad">$0.00</span>
+                        <!-- NUEVA UTILIDAD ESPERADA AL DÍA DE HOY -->
+                        <span style="display:block; font-size: 0.95rem; font-weight:900; color:#555; margin-top:2px;" id="kpi-utilidad-esperada">ESPERADO: $0.00</span>
                     </div>
                     <div class="kpi-item" style="box-shadow: 6px 6px 0px #00f0ff; position: relative;">
                         <span class="lbl">ESTADO IDEAL</span>
@@ -324,8 +306,8 @@
     </div>
 
     <!-- VENTANA MODAL PARA CITAS NO SHOW -->
-    <div id="citas-modal">
-        <div class="modal-box">
+    <div id="citas-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+        <div class="modal-box" style="width: 90%; max-width: 1000px; background: var(--bg-dark); border: 4px solid var(--spider-cyan); box-shadow: 10px 10px 0px rgba(0, 240, 255, 0.3); padding: 20px; border-radius: 8px;">
             <h2 id="modal-titulo" class="module-title" style="margin-bottom: 15px;">DETALLE DE CITAS</h2>
             <div class="table-container" style="max-height: 400px; overflow-y: auto; background: var(--bg-dark); border: 2px solid var(--spider-red);">
                 <table class="comic-table dark-table" style="width: 100%;">
@@ -338,6 +320,16 @@
             <div style="text-align: right; margin-top: 15px;">
                 <button class="btn-action" style="padding: 6px 20px; font-size: 1.4rem;" onclick="document.getElementById('citas-modal').style.display='none'">CERRAR X</button>
             </div>
+        </div>
+    </div>
+
+    <!-- NUEVA VENTANA MODAL PARA ALERTAS (TIPO CÓMIC) -->
+    <div id="spidey-alert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+        <div class="modal-box" style="text-align: center; max-width: 400px; background: var(--bg-dark); border: 4px solid var(--spider-red); box-shadow: 10px 10px 0px rgba(225, 0, 36, 0.4); padding: 20px; border-radius: 8px;">
+            <img src="MEDIA/spidey.gif" alt="Spidey" style="width: 80px; margin-bottom: 10px; mix-blend-mode: screen;">
+            <h2 class="module-title" style="font-size: 2rem; margin-bottom: 10px; color: var(--spider-cyan);">¡ACTUALIZACIÓN!</h2>
+            <p id="spidey-alert-msg" style="font-size: 1.4rem; font-family: 'Rajdhani', sans-serif; font-weight: bold; color: #fff; margin-bottom: 20px;"></p>
+            <button class="btn-action" style="font-size: 1.4rem;" onclick="document.getElementById('spidey-alert-modal').style.display='none'">ENTENDIDO</button>
         </div>
     </div>
 
