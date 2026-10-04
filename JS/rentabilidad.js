@@ -1,5 +1,5 @@
 // =========================================================
-// ARCHIVO: rentabilidad.js - RENTABILIDAD Y MATEMÁTICAS PURAS
+// ARCHIVO: rentabilidad.js - ESTADO IDEAL Y RENTABILIDAD
 // =========================================================
 
 window.objAnioPasado = {}; 
@@ -109,14 +109,10 @@ window.procesarExcelVentas = function(event) {
     event.target.value = '';
 };
 
-// =========================================================
-// CORAZÓN LECTOR DE EXCEL (A PRUEBA DE INICIOS DE MES)
-// =========================================================
 window.extraerDatosDeResumen = function(rows) {
     let rowCabeceras = -1;
     for (let i = rows.length - 1; i >= 0; i--) {
         let filaTexto = rows[i].join(" ").toUpperCase();
-        // Criterio Relajado: Solo exigimos que exista NORMAL y TOTAL en la fila
         if (filaTexto.includes("NORMAL") && filaTexto.includes("TOTAL")) {
             rowCabeceras = i; break;
         }
@@ -128,7 +124,6 @@ window.extraerDatosDeResumen = function(rows) {
     let ventasRow = rows[rowCabeceras + 1]; 
     let costosRow = rows[rowCabeceras + 2];
 
-    // Búsqueda robusta (Singular y sin acentos para evitar errores del sistema de origen)
     const buscarCol = (nombre) => headers.findIndex(c => String(c).toUpperCase().includes(nombre));
     let seccionesInfo = [
         { id: 'aseg', nombre: 'Aseguradoras', idx: buscarCol("ASEGURADORA") },
@@ -142,14 +137,13 @@ window.extraerDatosDeResumen = function(rows) {
     window.datosRentabilidad.items = [];
     
     seccionesInfo.forEach(sec => {
-        if(sec.idx !== -1) { // Si el departamento sí facturó este mes
+        if(sec.idx !== -1) { 
             let ventaBruta = parseFloat(ventasRow[sec.idx]) || 0;
             let costo = parseFloat(costosRow[sec.idx]) || 0;
             totalVentasC_IVA += ventaBruta;
             let ventaSinIva = ventaBruta / 1.16;
             window.datosRentabilidad.items.push({ nombre: sec.nombre, ventaBruta: ventaBruta, costo: costo, utilidad: (ventaSinIva - costo) });
         } else {
-            // SALVAVIDAS: Si no vendió, lo creamos en ceros para que no desaparezca la fila
             window.datosRentabilidad.items.push({ nombre: sec.nombre, ventaBruta: 0, costo: 0, utilidad: 0 });
         }
     });
@@ -190,7 +184,7 @@ window.procesarExcelOrdenesFacturadas = function(event) {
 };
 
 // =========================================================
-// FUNCIONES PARA GUARDAR OBJETIVOS MANUALES EN MEMORIA
+// GUARDADO DE OBJETIVOS MANUALES EN MEMORIA
 // =========================================================
 window.actualizarObjFila = function(el) {
     let seccion = el.getAttribute('data-seccion');
@@ -215,7 +209,7 @@ window.actualizarAnioPasado = function(el) {
 };
 
 // =========================================================
-// CORAZÓN MATEMÁTICO: OBJETIVOS POR FILA VS VENTA (S/IVA)
+// CORAZÓN MATEMÁTICO: ESTADO IDEAL, RENTABILIDAD Y ALCANCES
 // =========================================================
 window.calcularRentabilidad = function() {
     let objetivoMensual = parseFloat(document.getElementById('input-objetivo').value) || 0;
@@ -224,7 +218,6 @@ window.calcularRentabilidad = function() {
     
     localStorage.setItem(`objetivo_${anio}_${mes}`, objetivoMensual);
 
-    // Intentamos cargar la memoria si está vacía en la sesión
     let storedObjFila = localStorage.getItem(`objFila_${anio}_${mes}`);
     if (storedObjFila && Object.keys(window.objFilaMemoria).length === 0) window.objFilaMemoria = JSON.parse(storedObjFila);
     
@@ -253,11 +246,12 @@ window.calcularRentabilidad = function() {
             let anioPasVal = window.objAnioPasado[item.nombre] || 0; sumAnioPasTotal += anioPasVal; 
             let colorOrd = '#fff'; if (ordVal > 0 || anioPasVal > 0) { colorOrd = ordVal >= anioPasVal ? '#28a745' : '#e10024'; }
 
+            // SE APLICÓ LA NUEVA FUENTE RAJDHANI A LOS INPUTS
             html += `<tr><td style="text-align:left; font-weight:900; color:#000;">${item.nombre}</td>
                     <td>${window.mxnFormat.format(ventaSinIva)}</td><td>${window.mxnFormat.format(item.costo)}</td>
                     <td style="color:#000; font-weight:bold; font-size:1.1rem;">${window.mxnFormat.format(item.utilidad)}</td>
                     <td>${(participacion * 100).toFixed(0)}%</td>
-                    <td><input type="number" data-seccion="${item.nombre}" value="${objSeccion}" onchange="window.actualizarObjFila(this)" style="width:100px; background:#e0e0e0; border:2px solid #000; font-family:'Teko', sans-serif; font-size:1.3rem; font-weight:bold; text-align:center;"></td>
+                    <td><input type="number" data-seccion="${item.nombre}" value="${objSeccion}" onchange="window.actualizarObjFila(this)" style="width:110px; background:#e0e0e0; border:2px solid #000; font-family:'Rajdhani', sans-serif; font-size:1.3rem; font-weight:bold; text-align:center; letter-spacing:1px;"></td>
                     <td style="color:${colorAlcance}; font-weight:bold; font-size:1.1rem;">${alcance.toFixed(0)}%</td>
                     <td style="color:${colorOrd}; font-weight:bold; font-size:1.4rem; text-shadow:1px 1px 0px #000;">${ordVal}</td>
                     <td><input type="number" class="anio-pas-input" data-seccion="${item.nombre}" value="${anioPasVal}" onchange="window.actualizarAnioPasado(this)" style="width:70px; background:#e0e0e0; border:2px solid #000; font-family:'Teko', sans-serif; font-size:1.3rem; font-weight:bold; text-align:center;"></td>
@@ -281,7 +275,7 @@ window.calcularRentabilidad = function() {
     if(tbody) tbody.innerHTML = html;
 
     // =========================================================
-    // KPIs GLOBALES SUPERIORES
+    // KPIs GLOBALES SUPERIORES Y CÁLCULO DE ESTADO IDEAL
     // =========================================================
     sumUtilidad += (window.utilidadMostrador || 0);
     
@@ -291,6 +285,44 @@ window.calcularRentabilidad = function() {
     if(document.getElementById('kpi-utilidad')) document.getElementById('kpi-utilidad').innerText = window.mxnFormat.format(sumUtilidad);
     if(document.getElementById('kpi-alcance')) document.getElementById('kpi-alcance').innerText = alcanceRealTop.toFixed(1) + "%";
     if(document.getElementById('kpi-faltante')) document.getElementById('kpi-faltante').innerText = window.mxnFormat.format(faltanteRealTop);
+
+    // CÁLCULO DEL ESTADO IDEAL (RITMO DE CARRERA)
+    let diasLV = parseFloat(document.getElementById('ret-dias-lv')?.value) || 22;
+    let diasSab = parseFloat(document.getElementById('ret-dias-sab')?.value) || 4;
+    let totalDiasMes = diasLV + diasSab;
+    
+    let metaDiaria = totalDiasMes > 0 ? (objetivoMensual / totalDiasMes) : 0;
+    
+    // Contabilizar días transcurridos hasta HOY (sin contar domingos)
+    let mesObj = parseInt(mes) - 1; // 0-11
+    let anioObj = parseInt(anio);
+    let hoy = new Date();
+    let diasTranscurridos = 0;
+    
+    if (hoy.getFullYear() > anioObj || (hoy.getFullYear() === anioObj && hoy.getMonth() > mesObj)) {
+        diasTranscurridos = totalDiasMes; // Ya pasó el mes completo
+    } else if (hoy.getFullYear() < anioObj || (hoy.getFullYear() === anioObj && hoy.getMonth() < mesObj)) {
+        diasTranscurridos = 0; // Mes futuro
+    } else {
+        // Estamos en el mes actual. Contamos desde el día 1 hasta hoy (excluyendo domingos = 0)
+        for (let d = 1; d <= hoy.getDate(); d++) {
+            let diaCiclo = new Date(anioObj, mesObj, d);
+            if (diaCiclo.getDay() !== 0) diasTranscurridos++;
+        }
+        if (diasTranscurridos > totalDiasMes) diasTranscurridos = totalDiasMes; 
+    }
+
+    let ritmoActual = diasTranscurridos > 0 ? (sumUtilidad / diasTranscurridos) : 0;
+
+    // INYECTAR EN EL HTML DEL RECUADRO 4
+    if(document.getElementById('kpi-ritmo')) {
+        document.getElementById('kpi-ritmo').innerText = window.mxnFormat.format(ritmoActual) + ' / Día';
+        // Si el ritmo actual supera o empata la meta, vamos verdes. Si no, alerta roja.
+        document.getElementById('kpi-ritmo').style.color = ritmoActual >= metaDiaria ? 'var(--green-ok)' : 'var(--spider-red)';
+    }
+    if(document.getElementById('kpi-meta-diaria')) {
+        document.getElementById('kpi-meta-diaria').innerText = 'META DIARIA: ' + window.mxnFormat.format(metaDiaria);
+    }
 };
 
 window.exportarTodoAExcel = async function() {
