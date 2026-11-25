@@ -44,7 +44,6 @@ window.datosAsesores = { caratula: {}, kpi_config: {}, kpi_data: {}, servicios: 
 window.objFilaMemoria = {};
 window.vistaAdminActual = 'dashboard';
 
-// Utilidades globales a prueba de errores
 window.parseNumero = function (valor) {
     if (typeof valor === 'number') return isNaN(valor) ? 0 : valor;
     if (valor === null || valor === undefined) return 0;
@@ -67,13 +66,14 @@ window.escapeHTML = function (texto) {
 };
 // #endregion
 
-// #region 2. INTERFAZ, NAVEGACIÓN, CAJÓN DE ÓRDENES Y TOAST
+// #region 2. INTERFAZ, NAVEGACIÓN BLINDADA, CAJÓN Y TOAST
 const titulosAdmin = {
     dashboard: "KPI Ejecutivo · Hyundai Coatzacoalcos",
     rentabilidad: "Rentabilidad · Hyundai Coatzacoalcos",
     refacciones: "Refacciones · Hyundai Coatzacoalcos",
     asesores: "Asesores y Comisiones · Hyundai Coatzacoalcos",
     citas: "Citas y Retención · Hyundai Coatzacoalcos",
+    prepiking: "Prepiking · Hyundai Coatzacoalcos",
     taller: "Taller · Hyundai Coatzacoalcos",
     fallas: "Reportes de Fallas · Hyundai Coatzacoalcos"
 };
@@ -99,12 +99,19 @@ window.toggleDrawer = function (forzarCerrar = false) {
 };
 
 window.cambiarVistaAdmin = function (vista) {
+    if (!vista) return;
     window.vistaAdminActual = vista;
+
     document.querySelectorAll('.action[data-view]').forEach(btn => {
         btn.classList.toggle('activa', btn.dataset.view === vista);
     });
-    document.querySelectorAll('[id^="vista-"]').forEach(sec => sec.classList.add('oculto'));
-    document.getElementById(`vista-${vista}`)?.classList.remove('oculto');
+
+    document.querySelectorAll('section[id^="vista-"]').forEach(sec => {
+        sec.classList.add('oculto');
+    });
+
+    const target = document.getElementById(`vista-${vista}`);
+    if (target) target.classList.remove('oculto');
 
     const tituloEl = document.getElementById('tituloAdmin');
     if (tituloEl) tituloEl.innerText = titulosAdmin[vista] || "Administrador KPI";
@@ -112,7 +119,18 @@ window.cambiarVistaAdmin = function (vista) {
     if (vista === 'dashboard' && typeof window.actualizarGraficas === 'function') {
         setTimeout(() => window.actualizarGraficas(true), 60);
     }
+    if (vista === 'prepiking' && typeof window.renderizarPrepiking === 'function') {
+        window.renderizarPrepiking();
+    }
 };
+
+// Delegación global de clics en el menú lateral (nunca falla)
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.action[data-view]');
+    if (btn && btn.dataset.view) {
+        window.cambiarVistaAdmin(btn.dataset.view);
+    }
+});
 // #endregion
 
 // #region 3. SNAPSHOTS MENSUALES (GUARDAR Y CARGAR EN FIRESTORE)
@@ -165,7 +183,6 @@ window.cargarSnapshotMes = function (silent = false) {
     const hoy = new Date();
     const esMesEnCurso = (mes === String(hoy.getMonth() + 1).padStart(2, '0') && anio === String(hoy.getFullYear()));
 
-    if (document.getElementById('input-objetivo')) document.getElementById('input-objetivo').value = 1000000;
     if (document.getElementById('rentabilidad-fecha-act')) document.getElementById('rentabilidad-fecha-act').innerText = "ÚLT. ACT: BUSCANDO...";
 
     window.objOrdenesFacturadas = {};
@@ -190,6 +207,7 @@ window.cargarSnapshotMes = function (silent = false) {
     window.dbFirestore.collection('historico_mensual').doc(clave).get()
         .then((doc) => {
             const objLocalGuardado = localStorage.getItem(`objetivo_${anio}_${mes}`);
+            const inputObj = document.getElementById('input-objetivo');
 
             if (doc.exists) {
                 const data = doc.data();
@@ -197,8 +215,11 @@ window.cargarSnapshotMes = function (silent = false) {
                     document.getElementById('rentabilidad-fecha-act').innerText = "ÚLT. ACT: " + (data.fecha_registro || "SIN REGISTRO");
                 }
 
-                if (objLocalGuardado) document.getElementById('input-objetivo').value = objLocalGuardado;
-                else if (data.objetivoMensual) document.getElementById('input-objetivo').value = data.objetivoMensual;
+                if (inputObj) {
+                    if (objLocalGuardado !== null) inputObj.value = objLocalGuardado;
+                    else if (data.objetivoMensual) inputObj.value = data.objetivoMensual;
+                    else inputObj.value = 1000000;
+                }
 
                 if (data.ordenesMemoria) window.objOrdenesFacturadas = data.ordenesMemoria;
                 if (data.anioPasadoMemoria) window.objAnioPasado = data.anioPasadoMemoria;
@@ -221,7 +242,7 @@ window.cargarSnapshotMes = function (silent = false) {
                 if (!silent) window.mostrarToast(`Datos de ${mes}/${anio} cargados.`);
             } else {
                 if (document.getElementById('rentabilidad-fecha-act')) document.getElementById('rentabilidad-fecha-act').innerText = "ÚLT. ACT: SIN DATOS GUARDADOS";
-                if (objLocalGuardado) document.getElementById('input-objetivo').value = objLocalGuardado;
+                if (inputObj) inputObj.value = objLocalGuardado !== null ? objLocalGuardado : 1000000;
             }
 
             if (typeof window.calcularRentabilidad === 'function') window.calcularRentabilidad();
@@ -300,10 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elMes) elMes.addEventListener('change', () => window.cargarSnapshotMes(true));
     if (elAnio) elAnio.addEventListener('change', () => window.cargarSnapshotMes(true));
 
-    document.querySelectorAll('.action[data-view]').forEach(btn => {
-        btn.addEventListener('click', () => window.cambiarVistaAdmin(btn.dataset.view));
-    });
-
     const dockMenu = document.getElementById('dockMenu');
     const areaTrabajo = document.getElementById('areaTrabajo');
     document.getElementById('btnToggleDock')?.addEventListener('click', () => {
@@ -311,7 +328,6 @@ document.addEventListener("DOMContentLoaded", () => {
         areaTrabajo.classList.toggle('dock-oculto', escondido);
     });
 
-    // Atajos globales: Ctrl+S (Guardar Mes) y Esc (Cerrar cajón/modales)
     window.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
             e.preventDefault();

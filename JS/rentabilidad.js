@@ -248,6 +248,13 @@ window.procesarExcelOrdenesFacturadas = function (event) {
 // #endregion
 
 // #region 4. CÁLCULO DE RENTABILIDAD, RITMO Y ACTUALIZACIÓN DE KPIS
+window.actualizarObjetivoMensualManual = function (valor) {
+    const mes = document.getElementById('select-mes')?.value || '01';
+    const anio = document.getElementById('select-anio')?.value || '2026';
+    localStorage.setItem(`objetivo_${anio}_${mes}`, window.parseNumero(valor));
+    window.calcularRentabilidad();
+};
+
 window.actualizarObjFila = function (el) {
     const seccion = el.getAttribute('data-seccion');
     window.objFilaMemoria[seccion] = window.parseNumero(el.value);
@@ -272,8 +279,6 @@ window.calcularRentabilidad = function () {
     const objetivoMensual = window.parseNumero(document.getElementById('input-objetivo')?.value);
     const mes = document.getElementById('select-mes')?.value || '01';
     const anio = document.getElementById('select-anio')?.value || '2026';
-
-    localStorage.setItem(`objetivo_${anio}_${mes}`, objetivoMensual);
 
     if (Object.keys(window.objFilaMemoria).length === 0) {
         window.objFilaMemoria = window.safeJSONParse(localStorage.getItem(`objFila_${anio}_${mes}`), {});
@@ -352,7 +357,6 @@ window.calcularRentabilidad = function () {
     const alcanceRealTop = objetivoMensual > 0 ? (sumUtilidad / objetivoMensual) * 100 : 0;
     const faltanteRealTop = Math.max(0, objetivoMensual - sumUtilidad);
 
-    // Cálculo de Meta Diaria y Utilidad Esperada al día de hoy
     const diasLV = window.parseNumero(document.getElementById('ret-dias-lv')?.value) || 22;
     const diasSab = window.parseNumero(document.getElementById('ret-dias-sab')?.value) || 4;
     const totalDiasMes = diasLV + diasSab;
@@ -379,7 +383,6 @@ window.calcularRentabilidad = function () {
     const utilidadEsperada = metaDiaria * diasTranscurridos;
     const colorRitmo = ritmoActual >= metaDiaria ? 'var(--color-ok)' : 'var(--color-error)';
 
-    // Inyección en vista Rentabilidad
     if (document.getElementById('kpi-utilidad')) document.getElementById('kpi-utilidad').innerText = window.mxnFormat.format(sumUtilidad);
     if (document.getElementById('kpi-alcance')) document.getElementById('kpi-alcance').innerText = alcanceRealTop.toFixed(1) + "%";
     if (document.getElementById('kpi-faltante')) document.getElementById('kpi-faltante').innerText = window.mxnFormat.format(faltanteRealTop);
@@ -390,14 +393,9 @@ window.calcularRentabilidad = function () {
     if (document.getElementById('kpi-meta-diaria')) document.getElementById('kpi-meta-diaria').innerText = 'META DIARIA: ' + window.mxnFormat.format(metaDiaria);
     if (document.getElementById('kpi-utilidad-esperada')) document.getElementById('kpi-utilidad-esperada').innerText = 'ESPERADO: ' + window.mxnFormat.format(utilidadEsperada);
 
-    // Sincronización con KPI Ejecutivo (Dashboard)
     if (document.getElementById('dash-utilidad')) document.getElementById('dash-utilidad').innerText = window.mxnFormat.format(sumUtilidad);
-    if (document.getElementById('dash-utilidad-esp')) document.getElementById('dash-utilidad-esp').innerText = 'Esperado: ' + window.mxnFormat.format(utilidadEsperada);
-    if (document.getElementById('dash-alcance')) {
-        document.getElementById('dash-alcance').innerText = alcanceRealTop.toFixed(1) + "%";
-        document.getElementById('dash-alcance').style.color = alcanceRealTop >= 100 ? 'var(--color-ok)' : 'var(--texto-principal)';
-    }
-    if (document.getElementById('dash-ritmo')) document.getElementById('dash-ritmo').innerText = 'Ritmo: ' + window.mxnFormat.format(ritmoActual) + ' / día';
+    if (document.getElementById('dash-utilidad-esp')) document.getElementById('dash-utilidad-esp').innerText = 'Esperado hoy: ' + window.mxnFormat.format(utilidadEsperada);
+    if (document.getElementById('dash-ritmo')) document.getElementById('dash-ritmo').innerText = 'Ritmo actual: ' + window.mxnFormat.format(ritmoActual) + ' / día';
 
     if (typeof window.actualizarGraficas === 'function') window.actualizarGraficas();
 };

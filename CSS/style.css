@@ -32,6 +32,11 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+.oculto {
+    display: none !important;
+}
+/* #endregion */
+
 /* #region 1.2 BOTONES, PÍLDORAS Y ETIQUETAS */
 .btn-pildora {
     background: var(--fondo-tarjeta);
@@ -682,4 +687,37 @@ td input:focus {
 }
 /* #endregion */
 
+/* #endregion */
+
+/* #region 6. TIPOGRAFÍA OPCIÓN C Y BADGES PREPIKING */
+.titulo-seccion,
+.panel-subtitulo,
+.admin-chart-head h3,
+.admin-drawer h2,
+.caja-modal h3 {
+    font-family: var(--font-display) !important;
+    letter-spacing: -0.02em;
+}
+
+.btn-pildora,
+.btn-oscuro,
+.admin-select,
+.admin-input,
+.admin-kpi-val,
+table,
+td input {
+    font-family: var(--font-sans) !important;
+}
+
+.badge-tipo {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.badge-cita { background: #ece8dc; color: #181818; }
+.badge-sincita { background: #fef3c7; color: #92400e; }
+.badge-garantia { background: #fee2e2; color: #991b1b; }
 /* #endregion */

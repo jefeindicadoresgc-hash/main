@@ -237,7 +237,6 @@ window.procesarDatosCitas = function () {
     if (document.getElementById('taller-reagendadas')) document.getElementById('taller-reagendadas').innerText = window.citasReagendadasArray.length;
     if (document.getElementById('taller-perdidas')) document.getElementById('taller-perdidas').innerText = window.citasPerdidasArray.length;
 
-    // Sincronización con KPI Ejecutivo (Dashboard)
     const pctNoShow = totCitas > 0 ? (totNoShow / totCitas) * 100 : 0;
     const elDashPct = document.getElementById('dash-noshow-pct');
     if (elDashPct) {
@@ -265,6 +264,8 @@ window.procesarDatosCitas = function () {
 
     const contMot = document.getElementById('taller-motivos-container');
     if (contMot) contMot.innerHTML = htmlMotivos;
+
+    if (typeof window.renderizarPrepiking === 'function') window.renderizarPrepiking();
 };
 // #endregion
 
@@ -391,5 +392,102 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     setTimeout(window.calcularRetencion, 800);
+});
+// #endregion
+
+// #region 5. MÓDULO PREPIKING (EN VIVO DESDE CITAS_DIARIAS)
+window.modoPrepikingMes = false;
+
+window.renderizarPrepiking = function () {
+    const tbody = document.getElementById('tbody-prepiking-admin');
+    if (!tbody) return;
+
+    const inputFecha = document.getElementById('prepiking-fecha');
+    const buscar = (document.getElementById('prepiking-buscar')?.value || '').trim().toLowerCase();
+    const mesSel = document.getElementById('select-mes')?.value || '01';
+    const anioSel = document.getElementById('select-anio')?.value || '2026';
+
+    let fechaFiltro = '';
+    if (!window.modoPrepikingMes && inputFecha?.value) {
+        const [a, m, d] = inputFecha.value.split('-');
+        fechaFiltro = `${d}/${m}/${a}`;
+    }
+
+    const lista = Object.values(window.datosCitasRaw || {}).filter(c => {
+        if (!c || !c.Fecha) return false;
+        const p = String(c.Fecha).split('/');
+        if (p.length < 3) return false;
+        const fNorm = `${p[0].trim().padStart(2, '0')}/${p[1].trim().padStart(2, '0')}/${p[2].trim()}`;
+
+        if (window.modoPrepikingMes) {
+            if (p[1].trim().padStart(2, '0') !== mesSel || p[2].trim() !== anioSel) return false;
+        } else if (fechaFiltro && fNorm !== fechaFiltro) {
+            return false;
+        }
+
+        if (buscar) {
+            const texto = `${c.Folio || ''} ${c.Cliente || c.cliente || ''} ${c.Placas || ''} ${c.Vehiculo || c.vehiculo || ''} ${c.Asesor || ''}`.toLowerCase();
+            if (!texto.includes(buscar)) return false;
+        }
+        return true;
+    });
+
+    let cCitas = 0, cExtras = 0, cAsist = 0;
+    lista.forEach(c => {
+        const tipo = String(c.TipoIngreso || 'CITA').toUpperCase();
+        if (tipo.includes('SIN CITA') || tipo.includes('GARANT')) cExtras++;
+        else cCitas++;
+        if (String(c.asistio || '').toLowerCase().trim() === 'sí' || String(c.asistio || '').toLowerCase().trim() === 'si') cAsist++;
+    });
+
+    if (document.getElementById('prep-tot')) document.getElementById('prep-tot').innerText = lista.length;
+    if (document.getElementById('prep-citas')) document.getElementById('prep-citas').innerText = cCitas;
+    if (document.getElementById('prep-extras')) document.getElementById('prep-extras').innerText = cExtras;
+    if (document.getElementById('prep-asist')) document.getElementById('prep-asist').innerText = cAsist;
+
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="padding:20px; color:var(--texto-secundario);">Sin unidades para este filtro.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = lista.map(c => {
+        const tipo = String(c.TipoIngreso || 'CITA').toUpperCase();
+        const badgeCls = tipo.includes('GARANT') ? 'badge-garantia' : (tipo.includes('SIN') ? 'badge-sincita' : 'badge-cita');
+        const asist = String(c.asistio || 'Pendiente');
+        const colorAsist = asist.toLowerCase().startsWith('s') ? 'var(--color-ok)' : (asist.toLowerCase() === 'no' ? 'var(--color-error)' : 'var(--texto-secundario)');
+
+        return `<tr>
+            <td><strong>${window.escapeHTML(c.Folio || '-')}</strong></td>
+            <td>${window.escapeHTML(c.Fecha || '')}</td>
+            <td>${window.escapeHTML(c.Hora || '-')}</td>
+            <td style="text-align:left;">${window.escapeHTML(c.Asesor || c.asesor || '-')}</td>
+            <td><span class="badge-tipo ${badgeCls}">${window.escapeHTML(tipo)}</span></td>
+            <td style="text-align:left; font-weight:600;">${window.escapeHTML(c.Cliente || c.cliente || '-')}</td>
+            <td>${window.escapeHTML(c.Vehiculo || c.vehiculo || '-')}</td>
+            <td>${window.escapeHTML(c.Placas || '-')}</td>
+            <td style="text-align:left;">${window.escapeHTML(c.Servicio || c.servicio || '-')}</td>
+            <td style="color:${colorAsist}; font-weight:700;">${window.escapeHTML(asist)}</td>
+        </tr>`;
+    }).join('');
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    const inputFecha = document.getElementById('prepiking-fecha');
+    const hoy = new Date();
+    const hoyISO = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    if (inputFecha) {
+        inputFecha.value = hoyISO;
+        inputFecha.addEventListener('change', () => { window.modoPrepikingMes = false; window.renderizarPrepiking(); });
+    }
+    document.getElementById('btnPrepikingHoy')?.addEventListener('click', () => {
+        window.modoPrepikingMes = false;
+        if (inputFecha) inputFecha.value = hoyISO;
+        window.renderizarPrepiking();
+    });
+    document.getElementById('btnPrepikingMes')?.addEventListener('click', () => {
+        window.modoPrepikingMes = true;
+        window.renderizarPrepiking();
+    });
+    document.getElementById('prepiking-buscar')?.addEventListener('input', window.renderizarPrepiking);
 });
 // #endregion
