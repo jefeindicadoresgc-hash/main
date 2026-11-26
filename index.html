@@ -287,11 +287,28 @@
                 <button type="button" class="btn-pildora" onclick="window.open('https://sabanaasesores-kxrimsr234gn62ruhnagks.streamlit.app/', '_blank')">Abrir Sábana de Asesores ⭧</button>
             </div>
 
-            <div class="admin-grid-2 asesores-content-container">
-                <div class="tarjeta-panel"><h3 class="panel-subtitulo">Objetivo de Ventas</h3><div id="asesores-ventas-objetivos" class="tabla-scroll"></div></div>
-                <div class="tarjeta-panel"><h3 class="panel-subtitulo">Desglose de Comisiones</h3><div id="asesores-pagos-totales" class="tabla-scroll"></div></div>
-                <div class="tarjeta-panel"><h3 class="panel-subtitulo">Objetivos y KPIs (Refacciones)</h3><div id="asesores-kpi-refacciones" class="tabla-scroll"></div></div>
-                <div class="tarjeta-panel"><h3 class="panel-subtitulo">Cantidad de Servicios</h3><div id="asesores-cantidad-servicios" class="tabla-scroll"></div></div>
+            <div class="asesores-content-container">
+                <div class="asesores-grid-top">
+                    <div class="tarjeta-panel">
+                        <h3 class="panel-subtitulo">Objetivo de Ventas</h3>
+                        <div id="asesores-ventas-objetivos" class="tabla-scroll"></div>
+                    </div>
+                    <div class="tarjeta-panel">
+                        <h3 class="panel-subtitulo">Desglose de Comisiones</h3>
+                        <div id="asesores-pagos-totales" class="tabla-scroll"></div>
+                    </div>
+                </div>
+
+                <div class="asesores-stack-full">
+                    <div class="tarjeta-panel">
+                        <h3 class="panel-subtitulo">Objetivos y KPIs (Refacciones)</h3>
+                        <div id="asesores-kpi-refacciones" class="tabla-scroll"></div>
+                    </div>
+                    <div class="tarjeta-panel">
+                        <h3 class="panel-subtitulo">Cantidad de Servicios</h3>
+                        <div id="asesores-cantidad-servicios" class="tabla-scroll"></div>
+                    </div>
+                </div>
             </div>
         </section>
         <!-- #endregion -->
@@ -311,6 +328,16 @@
                 <div class="admin-kpi-box"><div class="admin-kpi-lbl">No Show</div><div class="admin-kpi-val" id="taller-noshow-tot" style="color:var(--color-error);">0</div></div>
                 <div class="admin-kpi-box clickable" onclick="window.mostrarDetalleCitas('reagendadas')"><div class="admin-kpi-lbl">Reagendadas (Ver detalle)</div><div class="admin-kpi-val" id="taller-reagendadas" style="color:var(--color-ok);">0</div></div>
                 <div class="admin-kpi-box clickable" onclick="window.mostrarDetalleCitas('perdidas')"><div class="admin-kpi-lbl">Perdidas (Ver detalle)</div><div class="admin-kpi-val" id="taller-perdidas" style="color:var(--color-error);">0</div></div>
+            </div>
+
+            <div class="admin-chart-card" style="margin-bottom:16px;">
+                <div class="admin-chart-head">
+                    <h3>Control de Citas Diarias (Mín: 8 · Máx: 16)</h3>
+                    <span id="citas-promedio-pill" class="status-pill">Promedio: 0.0 / día</span>
+                </div>
+                <div class="admin-chart-canvas-wrap" style="height:280px;">
+                    <canvas id="chartCitasDiarias"></canvas>
+                </div>
             </div>
 
             <div class="admin-grid-2">

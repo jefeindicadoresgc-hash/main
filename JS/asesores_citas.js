@@ -41,16 +41,30 @@ window.construirTablasAsesores = function () {
         return;
     }
 
-    // Tabla 1: Objetivo de Ventas
+    // Tabla 1: Objetivo de Ventas (con Faltante y Totales)
     const gLabels = [], gObjs = [], gVentas = [];
-    let htmlVentas = `<table><thead><tr><th style="text-align:left;">Asesor</th><th>Objetivo</th><th>Venta</th><th>Alcance</th></tr></thead><tbody>`;
+    let totObjVentas = 0, totVenVentas = 0, totFaltVentas = 0;
+
+    let htmlVentas = `<table><thead><tr>
+        <th style="text-align:left;">Asesor</th>
+        <th>Objetivo</th>
+        <th>Venta</th>
+        <th>Faltante</th>
+        <th>Alcance</th>
+    </tr></thead><tbody>`;
 
     listaAsesores.forEach(asesor => {
         const datosC = caratula[asesor] || {};
         const obj = window.parseNumero(datosC.objetivo);
         const ven = window.parseNumero(datosC.venta);
+        const faltante = Math.max(0, obj - ven);
         const alc = obj > 0 ? (ven / obj) * 100 : 0;
         const colorAlc = alc >= 100 ? 'var(--color-ok)' : 'var(--color-error)';
+        const colorFalt = faltante === 0 ? 'var(--color-ok)' : 'var(--color-error)';
+
+        totObjVentas += obj;
+        totVenVentas += ven;
+        totFaltVentas += faltante;
 
         gLabels.push(asesor);
         gObjs.push(obj);
@@ -60,10 +74,20 @@ window.construirTablasAsesores = function () {
             <td style="text-align:left; font-weight:700;">${window.escapeHTML(asesor)}</td>
             <td>${window.mxnFormat.format(obj)}</td>
             <td style="font-weight:600;">${window.mxnFormat.format(ven)}</td>
+            <td style="color:${colorFalt}; font-weight:700;">${window.mxnFormat.format(faltante)}</td>
             <td style="color:${colorAlc}; font-weight:700;">${alc.toFixed(1)}%</td>
         </tr>`;
     });
-    htmlVentas += `</tbody></table>`;
+
+    const alcGlobalVentas = totObjVentas > 0 ? (totVenVentas / totObjVentas) * 100 : 0;
+    htmlVentas += `<tr class="row-total">
+        <td style="text-align:left;">TOTALES</td>
+        <td>${window.mxnFormat.format(totObjVentas)}</td>
+        <td>${window.mxnFormat.format(totVenVentas)}</td>
+        <td style="color:${totFaltVentas === 0 ? 'var(--color-ok)' : 'var(--color-error)'};">${window.mxnFormat.format(totFaltVentas)}</td>
+        <td style="color:${alcGlobalVentas >= 100 ? 'var(--color-ok)' : 'var(--color-error)'};">${alcGlobalVentas.toFixed(1)}%</td>
+    </tr></tbody></table>`;
+
     window.datosAsesoresGrafica = { labels: gLabels, objetivos: gObjs, ventas: gVentas };
 
     const divVentas = document.getElementById('asesores-ventas-objetivos');
@@ -120,6 +144,7 @@ window.construirTablasAsesores = function () {
     if (divKpi) divKpi.innerHTML = htmlKPI;
 
     // Tabla 3: Desglose de Comisiones
+    let totWurth = 0, totSabana = 0, totComisiones = 0;
     let htmlPagos = `<table><thead><tr><th style="text-align:left;">Asesor</th><th>Wurth</th><th>Sábana</th><th>Total</th></tr></thead><tbody>`;
 
     listaAsesores.forEach(asesor => {
@@ -134,6 +159,10 @@ window.construirTablasAsesores = function () {
         const pagoSabana = window.parseNumero(caratula[asesor]?.comision);
         const pagoTotal = pagoWurth + pagoSabana;
 
+        totWurth += pagoWurth;
+        totSabana += pagoSabana;
+        totComisiones += pagoTotal;
+
         htmlPagos += `<tr>
             <td style="text-align:left; font-weight:700;">${window.escapeHTML(asesor)}</td>
             <td>${window.mxnFormat.format(pagoWurth)}</td>
@@ -141,7 +170,13 @@ window.construirTablasAsesores = function () {
             <td style="color:var(--color-ok); font-weight:700; background:var(--fondo-pagina);">${window.mxnFormat.format(pagoTotal)}</td>
         </tr>`;
     });
-    htmlPagos += `</tbody></table>`;
+
+    htmlPagos += `<tr class="row-total">
+        <td style="text-align:left;">TOTALES</td>
+        <td>${window.mxnFormat.format(totWurth)}</td>
+        <td>${window.mxnFormat.format(totSabana)}</td>
+        <td style="color:var(--color-ok);">${window.mxnFormat.format(totComisiones)}</td>
+    </tr></tbody></table>`;
 
     const divPagos = document.getElementById('asesores-pagos-totales');
     if (divPagos) divPagos.innerHTML = htmlPagos;
@@ -194,6 +229,8 @@ window.construirTablasAsesores = function () {
 // #region 3. MÓDULO CITAS, NO SHOW Y RETENCIÓN
 
 // #region 3.1 PROCESAMIENTO DE CITAS Y MOTIVOS NO SHOW
+window.datosCitasDiariasGrafica = { dias: [], conteos: [] };
+
 window.procesarDatosCitas = function () {
     const mes = document.getElementById('select-mes')?.value || '01';
     const anio = document.getElementById('select-anio')?.value || '2026';
@@ -203,6 +240,7 @@ window.procesarDatosCitas = function () {
     window.citasReagendadasArray = [];
     window.citasPerdidasArray = [];
     const motivosCount = {};
+    const citasPorDia = {};
 
     Object.values(window.datosCitasRaw || {}).forEach(cita => {
         if (!cita || !cita.Fecha) return;
@@ -214,6 +252,9 @@ window.procesarDatosCitas = function () {
         const cAnio = parts[2].trim();
 
         if (cMes === mes && cAnio === anio) {
+            // Conteo diario del mes completo para la gráfica de control
+            citasPorDia[cDia] = (citasPorDia[cDia] || 0) + 1;
+
             if (dia === 'ALL' || cDia === dia) {
                 totCitas++;
                 const asistio = String(cita.asistio || '').toLowerCase().trim();
@@ -231,6 +272,13 @@ window.procesarDatosCitas = function () {
             }
         }
     });
+
+    // Preparar datos ordenados cronológicamente para la gráfica de control
+    const diasOrdenados = Object.keys(citasPorDia).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    window.datosCitasDiariasGrafica = {
+        dias: diasOrdenados.map(d => `Día ${parseInt(d, 10)}`),
+        conteos: diasOrdenados.map(d => citasPorDia[d])
+    };
 
     if (document.getElementById('taller-citas-tot')) document.getElementById('taller-citas-tot').innerText = totCitas;
     if (document.getElementById('taller-noshow-tot')) document.getElementById('taller-noshow-tot').innerText = totNoShow;
@@ -265,6 +313,7 @@ window.procesarDatosCitas = function () {
     const contMot = document.getElementById('taller-motivos-container');
     if (contMot) contMot.innerHTML = htmlMotivos;
 
+    if (typeof window.dibujarGraficaCitasDiarias === 'function') window.dibujarGraficaCitasDiarias();
     if (typeof window.renderizarPrepiking === 'function') window.renderizarPrepiking();
 };
 // #endregion

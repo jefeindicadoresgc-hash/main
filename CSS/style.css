@@ -720,4 +720,23 @@ td input {
 .badge-cita { background: #ece8dc; color: #181818; }
 .badge-sincita { background: #fef3c7; color: #92400e; }
 .badge-garantia { background: #fee2e2; color: #991b1b; }
-/* #endregion */
+
+.asesores-grid-top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.asesores-stack-full {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+@media (max-width: 980px) {
+    .asesores-grid-top {
+        grid-template-columns: 1fr;
+    }
+}

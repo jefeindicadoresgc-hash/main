@@ -119,6 +119,9 @@ window.cambiarVistaAdmin = function (vista) {
     if (vista === 'dashboard' && typeof window.actualizarGraficas === 'function') {
         setTimeout(() => window.actualizarGraficas(true), 60);
     }
+    if (vista === 'citas' && typeof window.dibujarGraficaCitasDiarias === 'function') {
+        setTimeout(() => window.dibujarGraficaCitasDiarias(), 60);
+    }
     if (vista === 'prepiking' && typeof window.renderizarPrepiking === 'function') {
         window.renderizarPrepiking();
     }

@@ -3,7 +3,8 @@ const instanciasGraficas = {
     termometro: null,
     proyeccion: null,
     asesores: null,
-    taller: null
+    taller: null,
+    citasDiarias: null
 };
 
 const PALETA = {
@@ -335,6 +336,122 @@ function dibujarGraficaTaller() {
 }
 // #endregion
 
+// #region 4B. GRÁFICA DE CONTROL: CITAS DIARIAS (MÍN 8 / MÁX 16)
+window.dibujarGraficaCitasDiarias = function () {
+    const canvas = document.getElementById('chartCitasDiarias');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const LCI = 8;
+    const LCS = 16;
+    const dataCitas = window.datosCitasDiariasGrafica || { dias: [], conteos: [] };
+    const hayDatos = Array.isArray(dataCitas.dias) && dataCitas.dias.length > 0;
+
+    const conteos = hayDatos ? dataCitas.conteos : [0];
+    const suma = conteos.reduce((acc, n) => acc + n, 0);
+    const promedio = hayDatos ? (suma / conteos.length) : 0;
+
+    const pill = document.getElementById('citas-promedio-pill');
+    if (pill) {
+        pill.innerText = `Promedio: ${promedio.toFixed(1)} / día · LCI: ${LCI} · LCS: ${LCS}`;
+        pill.style.color = (promedio >= LCI && promedio <= LCS) ? 'var(--color-ok)' : 'var(--color-error)';
+    }
+
+    const maxDato = Math.max(...conteos, LCS);
+    const ejeYMax = Math.ceil((maxDato + 2) / 2) * 2;
+
+    const coloresPuntos = conteos.map(v => (v < LCI || v > LCS) ? PALETA.rojo : '#1d4ed8');
+    const radiosPuntos = conteos.map(v => (v < LCI || v > LCS) ? 5.5 : 4);
+
+    const pluginLimitesControl = {
+        id: 'limitesControlCitas',
+        afterDatasetsDraw(chart) {
+            const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+            const lineas = [
+                { valor: LCS, color: PALETA.rojo, texto: `LCS = ${LCS}` },
+                { valor: promedio, color: PALETA.verde, texto: `X̄ = ${promedio.toFixed(1)}` },
+                { valor: LCI, color: PALETA.rojo, texto: `LCI = ${LCI}` }
+            ];
+
+            ctx.save();
+            lineas.forEach(l => {
+                if (l.valor === 0 && !hayDatos) return;
+                const yPos = y.getPixelForValue(l.valor);
+                ctx.beginPath();
+                ctx.lineWidth = 1.8;
+                ctx.strokeStyle = l.color;
+                ctx.moveTo(left, yPos);
+                ctx.lineTo(right, yPos);
+                ctx.stroke();
+
+                ctx.fillStyle = l.color;
+                ctx.font = "700 11px 'Inter', sans-serif";
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(l.texto, right + 8, yPos);
+            });
+            ctx.restore();
+        }
+    };
+
+    renderizarGrafica('citasDiarias', 'chartCitasDiarias', {
+        type: 'line',
+        data: {
+            labels: hayDatos ? dataCitas.dias : ['Sin citas'],
+            datasets: [{
+                label: 'Citas del día',
+                data: conteos,
+                borderColor: '#1d4ed8',
+                backgroundColor: '#1d4ed8',
+                borderWidth: 2,
+                tension: 0,
+                pointBackgroundColor: coloresPuntos,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 1.5,
+                pointRadius: radiosPuntos,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { right: 82, top: 8 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: PALETA.negro,
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: (ctx) => {
+                            const val = ctx.parsed.y || 0;
+                            const estado = val < LCI ? ' (Bajo mínimo)' : (val > LCS ? ' (Sobre máximo)' : ' (En control)');
+                            return ` Citas: ${val}${estado}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: PALETA.grisTexto, font: { family: "'Inter', sans-serif", size: 11, weight: '600' } }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: ejeYMax,
+                    grid: { color: PALETA.bordeGrid },
+                    ticks: {
+                        stepSize: 2,
+                        color: PALETA.grisTexto,
+                        font: { family: "'Inter', sans-serif", size: 11 }
+                    }
+                }
+            }
+        },
+        plugins: [pluginLimitesControl]
+    });
+};
+// #endregion
+
 // #region 5. ORQUESTADOR GLOBAL
 window.actualizarGraficas = function (forzar = false) {
     if (!forzar && window.vistaAdminActual && window.vistaAdminActual !== 'dashboard') return;
@@ -350,26 +467,5 @@ window.actualizarGraficas = function (forzar = false) {
 
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => window.actualizarGraficas(true), 600);
-});
-// #endregion
-window.actualizarGraficas = function (forzar = false) {
-    // Si no estás viendo el Dashboard, ahorra CPU/GPU y marca pendiente
-    if (!forzar && window.vistaAdminActual && window.vistaAdminActual !== 'dashboard') {
-        graficasPendientes = true;
-        return;
-    }
-
-    if (timerDebounceGraficas) clearTimeout(timerDebounceGraficas);
-    timerDebounceGraficas = setTimeout(() => {
-        graficasPendientes = false;
-        dibujarGraficaRentabilidad();
-        dibujarGraficaRefacciones();
-        dibujarGraficaAsesores();
-        dibujarGraficaTaller();
-    }, 80);
-};
-
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => window.actualizarGraficas(true), 550);
 });
 // #endregion
