@@ -229,7 +229,8 @@ window.construirTablasAsesores = function () {
 // #region 3. MÓDULO CITAS, NO SHOW Y RETENCIÓN
 
 // #region 3.1 PROCESAMIENTO DE CITAS Y MOTIVOS NO SHOW
-window.datosCitasDiariasGrafica = { dias: [], conteos: [] };
+window.datosCitasDiariasGrafica = { dias: [], conteos: [], noShows: [] };
+window.datosSleepingGrafica = { labels: [], conteos: [] };
 
 window.procesarDatosCitas = function () {
     const mes = document.getElementById('select-mes')?.value || '01';
@@ -241,9 +242,24 @@ window.procesarDatosCitas = function () {
     window.citasPerdidasArray = [];
     const motivosCount = {};
     const citasPorDia = {};
+    const noShowPorDia = {};
+    const sleepingPorDia = {};
 
-    Object.values(window.datosCitasRaw || {}).forEach(cita => {
-        if (!cita || !cita.Fecha) return;
+    const todasCitas = Object.values(window.datosCitasRaw || {}).filter(c => c && c.Fecha);
+
+    // Detectar última fecha activa en la base para identificar Sleeping Over
+    let maxDateStr = "";
+    if (todasCitas.length > 0) {
+        maxDateStr = todasCitas
+            .map(c => {
+                const p = String(c.Fecha).split('/');
+                const v = p.length === 3 ? parseInt(`${p[2].trim()}${p[1].trim().padStart(2, '0')}${p[0].trim().padStart(2, '0')}`, 10) : 0;
+                return { o: c.Fecha, v };
+            })
+            .sort((a, b) => b.v - a.v)[0].o;
+    }
+
+    todasCitas.forEach(cita => {
         const parts = String(cita.Fecha).split('/');
         if (parts.length < 3) return;
 
@@ -252,12 +268,20 @@ window.procesarDatosCitas = function () {
         const cAnio = parts[2].trim();
 
         if (cMes === mes && cAnio === anio) {
-            // Conteo diario del mes completo para la gráfica de control
             citasPorDia[cDia] = (citasPorDia[cDia] || 0) + 1;
+            const asistio = String(cita.asistio || '').toLowerCase().trim();
+
+            if (asistio === 'no') {
+                noShowPorDia[cDia] = (noShowPorDia[cDia] || 0) + 1;
+            }
+
+            // Sleeping Over: activas (!oculto), no son No Show y su fecha es anterior a la última fecha activa
+            if (!cita.oculto && asistio !== 'no' && cita.Fecha !== maxDateStr) {
+                sleepingPorDia[cDia] = (sleepingPorDia[cDia] || 0) + 1;
+            }
 
             if (dia === 'ALL' || cDia === dia) {
                 totCitas++;
-                const asistio = String(cita.asistio || '').toLowerCase().trim();
                 if (asistio === 'no') {
                     totNoShow++;
                     const reagendo = String(cita.reagendo || '').toLowerCase().trim();
@@ -273,12 +297,30 @@ window.procesarDatosCitas = function () {
         }
     });
 
-    // Preparar datos ordenados cronológicamente para la gráfica de control
+    // Datos ordenados para Citas Diarias y No Show Diarios (mismo eje X)
     const diasOrdenados = Object.keys(citasPorDia).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
     window.datosCitasDiariasGrafica = {
         dias: diasOrdenados.map(d => `Día ${parseInt(d, 10)}`),
-        conteos: diasOrdenados.map(d => citasPorDia[d])
+        conteos: diasOrdenados.map(d => citasPorDia[d]),
+        noShows: diasOrdenados.map(d => noShowPorDia[d] || 0)
     };
+
+    // Datos de Sleeping Over por día de la semana (excluyendo domingos)
+    const nombresDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const sleepLabels = [];
+    const sleepConteos = [];
+    const mesNum = parseInt(mes, 10) - 1;
+    const anioNum = parseInt(anio, 10);
+
+    diasOrdenados.forEach(d => {
+        const diaNum = parseInt(d, 10);
+        const fechaObj = new Date(anioNum, mesNum, diaNum);
+        const diaSem = fechaObj.getDay();
+        if (diaSem === 0) return; // Excluir domingos
+        sleepLabels.push(`${nombresDia[diaSem]} ${diaNum}`);
+        sleepConteos.push(sleepingPorDia[d] || 0);
+    });
+    window.datosSleepingGrafica = { labels: sleepLabels, conteos: sleepConteos };
 
     if (document.getElementById('taller-citas-tot')) document.getElementById('taller-citas-tot').innerText = totCitas;
     if (document.getElementById('taller-noshow-tot')) document.getElementById('taller-noshow-tot').innerText = totNoShow;
@@ -314,6 +356,8 @@ window.procesarDatosCitas = function () {
     if (contMot) contMot.innerHTML = htmlMotivos;
 
     if (typeof window.dibujarGraficaCitasDiarias === 'function') window.dibujarGraficaCitasDiarias();
+    if (typeof window.dibujarGraficaNoShowDiarios === 'function') window.dibujarGraficaNoShowDiarios();
+    if (typeof window.dibujarGraficaSleepingDiarios === 'function') window.dibujarGraficaSleepingDiarios();
     if (typeof window.renderizarPrepiking === 'function') window.renderizarPrepiking();
 };
 // #endregion

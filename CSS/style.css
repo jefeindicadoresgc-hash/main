@@ -544,6 +544,27 @@ td input:focus {
     background: var(--fondo-tarjeta);
 }
 
+td input.input-limpio {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-weight: 600;
+    color: var(--texto-principal);
+    cursor: pointer;
+}
+
+td input.input-limpio:hover {
+    background: var(--fondo-pagina);
+    border-color: var(--borde-suave);
+}
+
+td input.input-limpio:focus {
+    background: var(--fondo-tarjeta);
+    border-color: var(--texto-principal);
+    cursor: text;
+}
+
 .row-total td {
     background: var(--fondo-suave) !important;
     font-weight: 700;

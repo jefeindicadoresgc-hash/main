@@ -4,7 +4,9 @@ const instanciasGraficas = {
     proyeccion: null,
     asesores: null,
     taller: null,
-    citasDiarias: null
+    citasDiarias: null,
+    noShowDiarios: null,
+    sleepingDiarios: null
 };
 
 const PALETA = {
@@ -336,7 +338,7 @@ function dibujarGraficaTaller() {
 }
 // #endregion
 
-// #region 4B. GRÁFICA DE CONTROL: CITAS DIARIAS (MÍN 8 / MÁX 16)
+// #region 4B. GRÁFICAS DE CITAS (CONTROL DIARIO, NO SHOW Y SLEEPING OVER)
 window.dibujarGraficaCitasDiarias = function () {
     const canvas = document.getElementById('chartCitasDiarias');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -439,15 +441,137 @@ window.dibujarGraficaCitasDiarias = function () {
                     beginAtZero: true,
                     max: ejeYMax,
                     grid: { color: PALETA.bordeGrid },
-                    ticks: {
-                        stepSize: 2,
-                        color: PALETA.grisTexto,
-                        font: { family: "'Inter', sans-serif", size: 11 }
-                    }
+                    ticks: { stepSize: 2, color: PALETA.grisTexto, font: { family: "'Inter', sans-serif", size: 11 } }
                 }
             }
         },
         plugins: [pluginLimitesControl]
+    });
+};
+
+window.dibujarGraficaNoShowDiarios = function () {
+    const canvas = document.getElementById('chartNoShowDiarios');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const dataCitas = window.datosCitasDiariasGrafica || { dias: [], noShows: [] };
+    const hayDatos = Array.isArray(dataCitas.dias) && dataCitas.dias.length > 0;
+    const noShows = hayDatos ? (dataCitas.noShows || []) : [0];
+
+    const suma = noShows.reduce((acc, n) => acc + n, 0);
+    const promedio = hayDatos ? (suma / noShows.length) : 0;
+
+    const pill = document.getElementById('noshow-promedio-pill');
+    if (pill) {
+        pill.innerText = `Total mes: ${suma} · Promedio: ${promedio.toFixed(1)} / día`;
+        pill.style.color = suma > 0 ? 'var(--color-error)' : 'var(--color-ok)';
+    }
+
+    const maxDato = Math.max(...noShows, 3);
+
+    renderizarGrafica('noShowDiarios', 'chartNoShowDiarios', {
+        type: 'line',
+        data: {
+            labels: hayDatos ? dataCitas.dias : ['Sin datos'],
+            datasets: [{
+                label: 'No Show del día',
+                data: noShows,
+                borderColor: PALETA.rojo,
+                backgroundColor: 'rgba(184, 50, 39, 0.08)',
+                fill: true,
+                borderWidth: 2,
+                tension: 0,
+                pointBackgroundColor: PALETA.rojo,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 1.5,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { right: 82, top: 8 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: PALETA.negro,
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: (ctx) => ` No Show: ${ctx.parsed.y || 0}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: PALETA.grisTexto, font: { family: "'Inter', sans-serif", size: 11, weight: '600' } }
+                },
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: maxDato + 1,
+                    grid: { color: PALETA.bordeGrid },
+                    ticks: { stepSize: 1, precision: 0, color: PALETA.grisTexto, font: { family: "'Inter', sans-serif", size: 11 } }
+                }
+            }
+        }
+    });
+};
+
+window.dibujarGraficaSleepingDiarios = function () {
+    const canvas = document.getElementById('chartSleepingDiarios');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const dataSleep = window.datosSleepingGrafica || { labels: [], conteos: [] };
+    const hayDatos = Array.isArray(dataSleep.labels) && dataSleep.labels.length > 0;
+    const conteos = hayDatos ? dataSleep.conteos : [0];
+    const totalSleep = conteos.reduce((acc, n) => acc + n, 0);
+
+    const pill = document.getElementById('sleeping-total-pill');
+    if (pill) {
+        pill.innerText = `Total rezago mes: ${totalSleep} unidad(es)`;
+        pill.style.color = totalSleep > 0 ? 'var(--color-alerta)' : 'var(--color-ok)';
+    }
+
+    renderizarGrafica('sleepingDiarios', 'chartSleepingDiarios', {
+        type: 'bar',
+        data: {
+            labels: hayDatos ? dataSleep.labels : ['Sin datos'],
+            datasets: [{
+                label: 'Sleeping Over',
+                data: conteos,
+                backgroundColor: conteos.map(v => v > 0 ? PALETA.alerta : PALETA.grisSuave),
+                borderRadius: 6,
+                maxBarThickness: 32
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: PALETA.negro,
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: (ctx) => ` Sleeping Over: ${ctx.parsed.y || 0}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: PALETA.grisTexto, font: { family: "'Inter', sans-serif", size: 11, weight: '600' } }
+                },
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: Math.max(...conteos, 3) + 1,
+                    grid: { color: PALETA.bordeGrid },
+                    ticks: { stepSize: 1, precision: 0, color: PALETA.grisTexto, font: { family: "'Inter', sans-serif", size: 11 } }
+                }
+            }
+        }
     });
 };
 // #endregion

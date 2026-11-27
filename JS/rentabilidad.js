@@ -248,6 +248,8 @@ window.procesarExcelOrdenesFacturadas = function (event) {
 // #endregion
 
 // #region 4. CÁLCULO DE RENTABILIDAD, RITMO Y ACTUALIZACIÓN DE KPIS
+const fmtObjetivoEntero = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+
 window.actualizarObjetivoMensualManual = function (valor) {
     const mes = document.getElementById('select-mes')?.value || '01';
     const anio = document.getElementById('select-anio')?.value || '2026';
@@ -319,16 +321,30 @@ window.calcularRentabilidad = function () {
             }
 
             const nombreSeguro = window.escapeHTML(item.nombre);
+            const objFormateado = fmtObjetivoEntero.format(objSeccion);
+
             html += `<tr>
                 <td style="text-align:left; font-weight:700;">${nombreSeguro}</td>
                 <td>${window.mxnFormat.format(ventaSinIva)}</td>
                 <td>${window.mxnFormat.format(costo)}</td>
                 <td style="font-weight:700;">${window.mxnFormat.format(utilidad)}</td>
                 <td>${(participacion * 100).toFixed(0)}%</td>
-                <td><input type="number" data-seccion="${nombreSeguro}" value="${objSeccion}" onchange="window.actualizarObjFila(this)" style="width:110px;"></td>
+                <td>
+                    <input type="text" class="input-limpio" data-seccion="${nombreSeguro}" value="${objFormateado}"
+                        onfocus="this.value = window.parseNumero(this.value) || ''; this.select();"
+                        onblur="window.actualizarObjFila(this)"
+                        onkeydown="if(event.key==='Enter') this.blur();"
+                        style="width:115px;">
+                </td>
                 <td style="color:${colorAlcance}; font-weight:700;">${alcance.toFixed(0)}%</td>
                 <td style="color:${colorOrd}; font-weight:700;">${ordVal}</td>
-                <td><input type="number" class="anio-pas-input" data-seccion="${nombreSeguro}" value="${anioPasVal}" onchange="window.actualizarAnioPasado(this)" style="width:74px;"></td>
+                <td>
+                    <input type="text" class="input-limpio anio-pas-input" data-seccion="${nombreSeguro}" value="${anioPasVal}"
+                        onfocus="this.select();"
+                        onblur="window.actualizarAnioPasado(this)"
+                        onkeydown="if(event.key==='Enter') this.blur();"
+                        style="width:68px;">
+                </td>
             </tr>`;
         });
     } else {
